@@ -291,7 +291,7 @@ export const Settings: React.FC = () => {
                   id="persona"
                   value={settings.persona}
                   onChange={(e) => setSettings({ ...settings, persona: e.target.value })}
-                  placeholder="pd43ffef"
+                  placeholder="p5bf051443c7"
                   className="bg-black/20 font-mono"
                   style={{ fontFamily: "'Source Code Pro', monospace" }}
                 />

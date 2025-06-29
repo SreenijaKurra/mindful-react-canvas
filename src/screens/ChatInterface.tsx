@@ -421,16 +421,6 @@ export const ChatInterface: React.FC = () => {
             </Button>
           </div>
           
-          <div className="mt-3 text-center">
-            <Button
-              onClick={handleVideoSession}
-              variant="outline"
-              className="text-primary border-primary hover:bg-primary hover:text-white bg-black/20 backdrop-blur-sm"
-            >
-              <Video className="size-4 mr-2" />
-              Start Video Session for Personalized Guidance
-            </Button>
-          </div>
         </div>
       </div>
       

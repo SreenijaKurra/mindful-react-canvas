@@ -29,7 +29,7 @@ export const createConversation = async (
   contextString += settings.context || "";
   
   const payload = {
-    persona_id: settings.persona || "pd43ffef",
+    persona_id: settings.persona || "p5bf051443c7",
     custom_greeting: settings.greeting !== undefined && settings.greeting !== null 
       ? settings.greeting 
       : "Hello, and welcome to your personal meditation space. I'm here as your meditation guide and wellness coach. How are you feeling today, and what would you like to explore in your practice?",
