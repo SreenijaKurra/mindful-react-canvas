@@ -2,12 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { DialogWrapper } from "@/components/DialogWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Video, Settings, Mic, MicOff } from "lucide-react";
+import { Send, Video, Settings, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
-import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
   id: string;
@@ -32,6 +31,8 @@ export const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -104,7 +105,7 @@ export const ChatInterface: React.FC = () => {
     if (lowerMessage.includes('video') || lowerMessage.includes('face to face') || lowerMessage.includes('see you')) {
       return "I'd love to meet you face-to-face! Video sessions allow me to provide more personalized guidance, read your energy, and create a deeper connection. Click the video button below to start our live session.";
     }
-
+    
     return "Thank you for sharing that with me. I'm here to support your wellness journey. For more personalized guidance and a deeper connection, would you like to switch to a video session where we can work together more closely?";
   };
 
@@ -167,21 +168,70 @@ export const ChatInterface: React.FC = () => {
     }
   };
 
+  const handlePlayAudio = async (text: string) => {
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    try {
+      setIsPlayingAudio(true);
+      
+      // Use Web Speech API for text-to-speech
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        
+        // Try to use a female voice if available
+        const voices = speechSynthesis.getVoices();
+        const femaleVoice = voices.find(voice => 
+          voice.name.toLowerCase().includes('female') || 
+          voice.name.toLowerCase().includes('woman') ||
+          voice.name.toLowerCase().includes('samantha') ||
+          voice.name.toLowerCase().includes('karen')
+        );
+        
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+
+        utterance.onend = () => {
+          setIsPlayingAudio(false);
+        };
+
+        utterance.onerror = () => {
+          setIsPlayingAudio(false);
+        };
+
+        speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const stopAudio = () => {
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    setIsPlayingAudio(false);
+  };
+
   return (
     <DialogWrapper>
-      <video
-        src={gloriaVideo}
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="fixed inset-0 h-full w-full object-cover opacity-20"
-      />
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" />
       
       <div className="relative z-10 flex flex-col h-full max-h-[600px] w-full max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-black/20 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
               <span className="text-white font-semibold">AI</span>
@@ -198,6 +248,7 @@ export const ChatInterface: React.FC = () => {
               size="icon"
               onClick={handleVideoSession}
               title="Start Video Session"
+              className="bg-black/20 border-gray-600 hover:bg-gray-700"
             >
               <Video className="size-5" />
             </Button>
@@ -207,6 +258,7 @@ export const ChatInterface: React.FC = () => {
               size="icon"
               onClick={() => setScreenState({ currentScreen: "settings" })}
               title="Settings"
+              className="bg-black/20 border-gray-600 hover:bg-gray-700"
             >
               <Settings className="size-5" />
             </Button>
@@ -214,30 +266,49 @@ export const ChatInterface: React.FC = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/10 backdrop-blur-sm">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] p-3 rounded-2xl ${
+                className={`max-w-[80%] p-3 rounded-2xl relative group ${
                   message.sender === 'user'
                     ? 'bg-primary text-white'
-                    : 'bg-gray-700 text-white'
+                    : 'bg-gray-800/80 text-white backdrop-blur-sm'
                 }`}
               >
                 <p className="text-sm">{message.text}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs opacity-70">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  
+                  {/* Audio button for bot messages */}
+                  {message.sender === 'bot' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => isPlayingAudio ? stopAudio() : handlePlayAudio(message.text)}
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                      title={isPlayingAudio ? "Stop Audio" : "Listen to Audio"}
+                    >
+                      {isPlayingAudio ? (
+                        <VolumeX className="size-3" />
+                      ) : (
+                        <Volume2 className="size-3" />
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
           
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-gray-700 text-white p-3 rounded-2xl">
+              <div className="bg-gray-800/80 text-white p-3 rounded-2xl backdrop-blur-sm">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -250,7 +321,7 @@ export const ChatInterface: React.FC = () => {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-gray-700 bg-black/20 backdrop-blur-sm">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Input
@@ -258,7 +329,7 @@ export const ChatInterface: React.FC = () => {
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me about meditation, stress relief, mindfulness..."
-                className="bg-gray-800 border-gray-600 text-white pr-12"
+                className="bg-gray-800/50 border-gray-600 text-white pr-12 backdrop-blur-sm"
                 style={{ fontFamily: "'Source Code Pro', monospace" }}
               />
               {recognition && (
@@ -278,7 +349,7 @@ export const ChatInterface: React.FC = () => {
             <Button
               onClick={handleSendMessage}
               disabled={!inputText.trim()}
-              className="px-4"
+              className="px-4 bg-primary hover:bg-primary/90"
             >
               <Send className="size-4" />
             </Button>
@@ -288,7 +359,7 @@ export const ChatInterface: React.FC = () => {
             <Button
               onClick={handleVideoSession}
               variant="outline"
-              className="text-primary border-primary hover:bg-primary hover:text-white"
+              className="text-primary border-primary hover:bg-primary hover:text-white bg-black/20 backdrop-blur-sm"
             >
               <Video className="size-4 mr-2" />
               Start Video Session for Personalized Guidance

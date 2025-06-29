@@ -4,4 +4,7 @@ interface Window {
       execute: (siteKey: string, options: { action: string }) => Promise<string>;
     };
   };
-} 
+  SpeechRecognition?: any;
+  webkitSpeechRecognition?: any;
+  speechSynthesis?: SpeechSynthesis;
+}
