@@ -11,6 +11,7 @@ import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } fr
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { audioFileService, isSupabaseAvailable } from "@/lib/supabase";
+import { generateElevenLabsAudio } from "@/api/elevenLabsTTS";
 
 interface Message {
   id: string;
@@ -160,6 +161,46 @@ export const ChatInterface: React.FC = () => {
   const handlePlayAudio = async (text: string) => {
     // Stop any currently playing audio
     setCurrentSpeakingMessage(null);
+    
+    try {
+      setIsPlayingAudio(true);
+      setCurrentSpeakingMessage(text);
+      
+      // Generate audio using ElevenLabs
+      console.log('🎵 Generating ElevenLabs audio for:', text.substring(0, 50) + '...');
+      const audioUrl = await generateElevenLabsAudio(text, settings.name);
+      
+      // Play the generated audio
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.8;
+      
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        setCurrentSpeakingMessage(null);
+      };
+      
+      audio.onerror = () => {
+        console.error('Error playing generated audio');
+        setIsPlayingAudio(false);
+        setCurrentSpeakingMessage(null);
+      };
+      
+      await audio.play();
+      console.log('🎵 Playing ElevenLabs generated audio');
+      
+    } catch (error) {
+      console.error("Error generating/playing ElevenLabs audio:", error);
+      setIsPlayingAudio(false);
+      setCurrentSpeakingMessage(null);
+      
+      // Fallback to Web Speech API if ElevenLabs fails
+      console.log('🔄 Falling back to Web Speech API');
+      await playWebSpeechAudio(text);
+    }
+  };
+
+  const playWebSpeechAudio = async (text: string) => {
+    // Original Web Speech API implementation as fallback
 
     // Create database record for TTS audio
     let audioFileRecord;
@@ -283,9 +324,18 @@ export const ChatInterface: React.FC = () => {
   };
 
   const stopAudio = () => {
+    // Stop any HTML5 audio elements
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    
+    // Stop Web Speech API
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
     }
+    
     setIsPlayingAudio(false);
     setCurrentSpeakingMessage(null);
   };

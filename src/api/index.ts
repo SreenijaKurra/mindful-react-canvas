@@ -4,3 +4,4 @@ export * from "./healthCheck";
 export * from "./webhook";
 export * from "./openai";
 export * from "./tavusLipSync";
+export * from "./elevenLabsTTS";
