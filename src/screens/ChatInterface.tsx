@@ -376,32 +376,45 @@ export const ChatInterface: React.FC = () => {
     setCurrentVideoText(text); // Store the text being processed
     
     try {
-      console.log('🎬 Loading sample Tavus lip sync video from Supabase storage...');
+      let sampleVideoUrl: string;
       
-      // Get the sample video from Supabase storage
-      const sampleVideoUrl = await getSampleTavusVideo();
-      console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
+      // Try to get sample video from Supabase storage if configured
+      if (supabase) {
+        console.log('🎬 Loading sample Tavus lip sync video from Supabase storage...');
+        try {
+          sampleVideoUrl = await getSampleTavusVideo();
+          console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
+        } catch (storageError) {
+          console.warn('⚠️ Failed to load from Supabase storage, using fallback video:', storageError);
+          sampleVideoUrl = getFallbackVideoUrl();
+        }
+      } else {
+        console.log('🎬 Supabase not configured, using fallback sample video...');
+        sampleVideoUrl = getFallbackVideoUrl();
+      }
       
       // Create database record for the sample video playback
-      try {
-        await audioFileService.create({
-          user_name: settings.name,
-          message_text: text,
-          audio_type: 'tavus_video',
-          status: 'completed',
-          audio_url: sampleVideoUrl,
-          metadata: {
-            video_source: 'supabase_sample',
-            sample_video_url: sampleVideoUrl,
-            request_timestamp: new Date().toISOString(),
-            text_length: text.length,
-            original_text: text,
-            playback_type: 'sample_demo'
-          }
-        });
-        console.log('✅ Created sample video playback record');
-      } catch (dbError) {
-        console.warn('⚠️ Failed to create database record (non-critical):', dbError);
+      if (isSupabaseAvailable) {
+        try {
+          await audioFileService.create({
+            user_name: settings.name,
+            message_text: text,
+            audio_type: 'tavus_video',
+            status: 'completed',
+            audio_url: sampleVideoUrl,
+            metadata: {
+              video_source: supabase ? 'supabase_sample' : 'fallback_sample',
+              sample_video_url: sampleVideoUrl,
+              request_timestamp: new Date().toISOString(),
+              text_length: text.length,
+              original_text: text,
+              playback_type: 'sample_demo'
+            }
+          });
+          console.log('✅ Created sample video playback record');
+        } catch (dbError) {
+          console.warn('⚠️ Failed to create database record (non-critical):', dbError);
+        }
       }
       
       // Set the video URL and open the player immediately
@@ -411,14 +424,18 @@ export const ChatInterface: React.FC = () => {
       console.log('🎬 Sample video popup should now be visible');
       
       // Send analytics data for sample video playback
-      await sendWebhookData({
-        event_type: "sample_video_played",
-        user_name: settings.name,
-        timestamp: new Date().toISOString(),
-        message_text: text,
-        video_url: sampleVideoUrl,
-        session_type: "sample_video_demo"
-      });
+      try {
+        await sendWebhookData({
+          event_type: "sample_video_played",
+          user_name: settings.name,
+          timestamp: new Date().toISOString(),
+          message_text: text,
+          video_url: sampleVideoUrl,
+          session_type: "sample_video_demo"
+        });
+      } catch (webhookError) {
+        console.warn('⚠️ Failed to send webhook data (non-critical):', webhookError);
+      }
       
     } catch (error) {
       console.error("Error loading sample video:", error);
@@ -426,6 +443,13 @@ export const ChatInterface: React.FC = () => {
       setVideoError(errorMessage);
       setIsGeneratingVideo(false);
     }
+  };
+
+  // Function to get fallback video URL when Supabase is not configured
+  const getFallbackVideoUrl = (): string => {
+    // Use a sample video from a public CDN or local asset
+    // This is a placeholder - you can replace with an actual sample video URL
+    return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
   };
 
   // Function to get sample video from Supabase storage
