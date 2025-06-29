@@ -10,7 +10,7 @@ import { sendWebhookData } from "@/api/webhook";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus, getTavusLipSyncStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
-import { audioFileService, isSupabaseAvailable } from "@/lib/supabase";
+import { audioFileService, isSupabaseAvailable, supabase } from "@/lib/supabase";
 import { generateElevenLabsAudio } from "@/api/elevenLabsTTS";
 
 interface Message {
@@ -375,111 +375,115 @@ export const ChatInterface: React.FC = () => {
     setIsGeneratingVideo(true);
     setCurrentVideoText(text); // Store the text being processed
     
-    if (!token) {
-      setVideoError("No API token available. Please configure your API key in settings.");
-      setIsGeneratingVideo(false);
-      return;
-    }
-
     try {
-      console.log('🎬 Generating Tavus lip sync video for text:', text);
+      console.log('🎬 Loading sample Tavus lip sync video from Supabase storage...');
       
-      // Generate lip sync video using Tavus API with your persona
-      const videoResponse = await generateTavusLipSyncVideo(token, text.substring(0, 500), settings.name); // Limit text length
-      console.log('Video generation response:', videoResponse);
+      // Get the sample video from Supabase storage
+      const sampleVideoUrl = await getSampleTavusVideo();
+      console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
       
-      // Poll for video completion
-      let attempts = 0;
-      const maxAttempts = 30; // 5 minutes max wait time
-      
-      const pollVideoStatus = async (): Promise<void> => {
-        try {
-          const statusResponse = await getTavusLipSyncStatus(token, videoResponse.lipsync_id);
-          console.log('📊 Video status:', statusResponse);
-          
-          if (statusResponse.status === 'completed' && statusResponse.lipsync_url) {
-            console.log('✅ Lip sync completed, setting video URL:', statusResponse.lipsync_url);
-            setTavusVideoUrl(statusResponse.lipsync_url);
-            setIsTavusPlayerOpen(true);
-            setIsGeneratingVideo(false);
-            console.log('🎬 Video popup should now be visible');
-            
-            // Send analytics data
-            await sendWebhookData({
-              event_type: "tavus_lip_sync_completed",
-              user_name: settings.name,
-              timestamp: new Date().toISOString(),
-              message_text: text,
-              lipsync_id: videoResponse.lipsync_id,
-              lipsync_url: statusResponse.lipsync_url,
-              session_type: "chat_lip_sync_response"
-            });
-            
-            // Log successful completion to console for demo
-            console.log('💾 Lip sync video successfully stored in Supabase with video URL:', statusResponse.lipsync_url);
-            
-          } else if (statusResponse.status === 'failed') {
-            // Update database with failed status
-            try {
-              const audioFile = await audioFileService.getByVideoId(videoResponse.lipsync_id);
-              if (audioFile) {
-                await audioFileService.update(audioFile.id, {
-                  status: 'failed',
-                  metadata: {
-                    ...audioFile.metadata,
-                    failure_reason: 'Lip sync generation failed',
-                    failure_timestamp: new Date().toISOString()
-                  }
-                });
-              }
-            } catch (dbError) {
-              console.warn('Failed to update database with failure status:', dbError);
-            }
-            throw new Error('Lip sync generation failed');
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(pollVideoStatus, 5000); // Check every 5 seconds
-          } else {
-            throw new Error('Lip sync generation timed out');
+      // Create database record for the sample video playback
+      try {
+        await audioFileService.create({
+          user_name: settings.name,
+          message_text: text,
+          audio_type: 'tavus_video',
+          status: 'completed',
+          audio_url: sampleVideoUrl,
+          metadata: {
+            video_source: 'supabase_sample',
+            sample_video_url: sampleVideoUrl,
+            request_timestamp: new Date().toISOString(),
+            text_length: text.length,
+            original_text: text,
+            playback_type: 'sample_demo'
           }
-        } catch (error) {
-          console.error('Error checking lip sync status:', error);
-          // Check if it's a network connectivity issue
-          if (error instanceof Error && error.message === 'Failed to fetch') {
-            setVideoError('Unable to connect to the Tavus lip sync service. Please check your internet connection and try again.');
-          } else {
-            setVideoError('Failed to generate lip sync video. Please try again.');
-          }
-          setIsGeneratingVideo(false);
-        }
-      };
+        });
+        console.log('✅ Created sample video playback record');
+      } catch (dbError) {
+        console.warn('⚠️ Failed to create database record (non-critical):', dbError);
+      }
       
-      // Start polling after initial delay
-      setTimeout(pollVideoStatus, 3000); // Start checking after 3 seconds
+      // Set the video URL and open the player immediately
+      setTavusVideoUrl(sampleVideoUrl);
+      setIsTavusPlayerOpen(true);
+      setIsGeneratingVideo(false);
+      console.log('🎬 Sample video popup should now be visible');
       
-      // Send analytics data
+      // Send analytics data for sample video playback
       await sendWebhookData({
-        event_type: "tavus_lip_sync_requested",
+        event_type: "sample_video_played",
         user_name: settings.name,
         timestamp: new Date().toISOString(),
         message_text: text,
-        lipsync_id: videoResponse.lipsync_id,
-        session_type: "chat_lip_sync_response"
+        video_url: sampleVideoUrl,
+        session_type: "sample_video_demo"
       });
       
     } catch (error) {
-      console.error("Error generating lip sync video:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to generate lip sync video";
+      console.error("Error loading sample video:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load sample video";
       setVideoError(errorMessage);
       setIsGeneratingVideo(false);
-      
-      // If it's a concurrent lip sync error, provide additional guidance
-      if (errorMessage.includes("maximum number of active lip sync")) {
-        // Auto-clear the error after 10 seconds to reduce UI clutter
-        setTimeout(() => {
-          setVideoError(null);
-        }, 10000);
+    }
+  };
+
+  // Function to get sample video from Supabase storage
+  const getSampleTavusVideo = async (): Promise<string> => {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
+    }
+
+    try {
+      // List files in the audio-files bucket to find sample videos
+      const { data: files, error } = await supabase.storage
+        .from('audio-files')
+        .list('', {
+          limit: 100,
+          sortBy: { column: 'name', order: 'asc' }
+        });
+
+      if (error) {
+        console.error('Error listing files:', error);
+        throw new Error('Failed to access storage bucket');
       }
+
+      console.log('📁 Files in storage bucket:', files);
+
+      // Look for video files (mp4, mov, etc.)
+      const videoFiles = files?.filter(file => 
+        file.name.toLowerCase().includes('tavus') || 
+        file.name.toLowerCase().includes('lipsync') ||
+        file.name.toLowerCase().includes('sample') ||
+        file.name.toLowerCase().endsWith('.mp4') ||
+        file.name.toLowerCase().endsWith('.mov')
+      ) || [];
+
+      console.log('🎬 Video files found:', videoFiles);
+
+      if (videoFiles.length === 0) {
+        throw new Error('No sample video files found in storage bucket');
+      }
+
+      // Use the first video file found
+      const sampleFile = videoFiles[0];
+      console.log('📹 Using sample file:', sampleFile.name);
+
+      // Get public URL for the sample video
+      const { data: urlData } = supabase.storage
+        .from('audio-files')
+        .getPublicUrl(sampleFile.name);
+
+      if (!urlData.publicUrl) {
+        throw new Error('Failed to get public URL for sample video');
+      }
+
+      console.log('✅ Sample video public URL:', urlData.publicUrl);
+      return urlData.publicUrl;
+
+    } catch (error) {
+      console.error('Error getting sample video:', error);
+      throw error;
     }
   };
 
@@ -558,7 +562,7 @@ export const ChatInterface: React.FC = () => {
                         onClick={() => handlePlayVideo(message.text)}
                         disabled={isGeneratingVideo}
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Generate Lip Sync Video"
+                        title="Play Sample Video"
                       >
                         {isGeneratingVideo ? (
                           <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -595,9 +599,9 @@ export const ChatInterface: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-2">
                   <p className="text-red-200 text-sm">{videoError}</p>
-                  {videoError.includes("maximum number of active video") && (
+                  {videoError.includes("storage bucket") && (
                     <p className="text-red-300 text-xs mt-1 opacity-80">
-                      💡 Tip: Wait for current video generations to complete, or try again in a few minutes.
+                      💡 Tip: Make sure you have uploaded a sample video file to the Supabase storage bucket.
                     </p>
                   )}
                 </div>
