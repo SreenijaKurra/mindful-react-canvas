@@ -25,7 +25,9 @@ export const generateAIResponse = async (userMessage: string, userName?: string)
       metadata: {
         api_endpoint: "https://api.openai.com/v1/chat/completions",
         model: "gpt-3.5-turbo",
-        request_timestamp: new Date().toISOString()
+        request_timestamp: new Date().toISOString(),
+        user_message: userMessage,
+        system_prompt_used: true
       }
     });
     console.log('✅ Created AI text generation record:', audioFileRecord.id);
@@ -90,7 +92,9 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
             ...audioFileRecord.metadata,
             response_text: responseText,
             completion_timestamp: new Date().toISOString(),
-            tokens_used: data.usage?.total_tokens || 0
+            tokens_used: data.usage?.total_tokens || 0,
+            response_length: responseText.length,
+            model_used: 'gpt-3.5-turbo'
           }
         });
         console.log('✅ Updated AI text generation record with completion');
@@ -112,7 +116,8 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
           metadata: {
             ...audioFileRecord.metadata,
             error: error instanceof Error ? error.message : 'Unknown error',
-            error_timestamp: new Date().toISOString()
+            error_timestamp: new Date().toISOString(),
+            fallback_used: true
           }
         });
       } catch (dbError) {

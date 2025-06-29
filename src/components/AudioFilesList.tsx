@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { audioFileService, AudioFile } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { Play, Download, Eye, Clock, User, MessageSquare, RefreshCw } from 'lucide-react';
+import { Play, Download, Eye, Clock, User, MessageSquare, RefreshCw, Trash2, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface AudioFilesListProps {
   userName?: string;
   limit?: number;
+  showStats?: boolean;
 }
 
 export const AudioFilesList: React.FC<AudioFilesListProps> = ({ 
   userName, 
-  limit = 20 
+  limit = 20,
+  showStats = true
 }) => {
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showStatsPanel, setShowStatsPanel] = useState(false);
 
   const fetchAudioFiles = async () => {
     try {
@@ -25,6 +29,12 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
       
       if (userName) {
         files = await audioFileService.getByUser(userName);
+        
+        // Fetch user stats if enabled
+        if (showStats) {
+          const userStats = await audioFileService.getUserStats(userName);
+          setStats(userStats);
+        }
       } else {
         files = await audioFileService.getRecent(limit);
       }
@@ -38,6 +48,25 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this audio file record?')) {
+      return;
+    }
+
+    try {
+      await audioFileService.delete(id);
+      setAudioFiles(prev => prev.filter(file => file.id !== id));
+      
+      // Refresh stats if showing them
+      if (showStats && userName) {
+        const userStats = await audioFileService.getUserStats(userName);
+        setStats(userStats);
+      }
+    } catch (err) {
+      console.error('Error deleting audio file:', err);
+      setError('Failed to delete audio file');
+    }
+  };
   useEffect(() => {
     fetchAudioFiles();
   }, [userName, limit]);
@@ -125,6 +154,17 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
           Audio Files {userName && `for ${userName}`}
         </h3>
         <div className="flex items-center gap-2">
+          {showStats && stats && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowStatsPanel(!showStatsPanel)}
+              className="h-8 w-8"
+              title="Show Statistics"
+            >
+              <BarChart3 className="size-4" />
+            </Button>
+          )}
           <span className="text-sm text-gray-400">
             {audioFiles.length} file{audioFiles.length !== 1 ? 's' : ''}
           </span>
@@ -140,6 +180,43 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
         </div>
       </div>
 
+      {/* Statistics Panel */}
+      {showStatsPanel && stats && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-gray-800/30 border border-gray-700 rounded-lg p-4"
+        >
+          <h4 className="text-white font-medium mb-3">📊 Statistics</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-400">{stats.total}</div>
+              <div className="text-gray-400">Total Files</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-400">{stats.byStatus?.completed || 0}</div>
+              <div className="text-gray-400">Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">{stats.byStatus?.pending || 0}</div>
+              <div className="text-gray-400">Pending</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">{Math.floor(stats.totalDuration / 60)}m</div>
+              <div className="text-gray-400">Total Duration</div>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(stats.byType).map(([type, count]) => (
+              <div key={type} className="bg-gray-700/50 px-3 py-1 rounded-full text-xs">
+                {getTypeIcon(type as AudioFile['audio_type'])} {type.replace(/_/g, ' ')}: {count}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
       <div className="space-y-3">
         {audioFiles.map((file, index) => (
           <motion.div
@@ -226,6 +303,16 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
                     ✓ Generated
                   </div>
                 )}
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDelete(file.id)}
+                  className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  title="Delete Record"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
               </div>
             </div>
 

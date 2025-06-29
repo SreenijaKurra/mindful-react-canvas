@@ -124,6 +124,40 @@ export const audioFileService = {
     return audioFiles || [];
   },
 
+  // Get audio files by user with pagination
+  async getByUserPaginated(userName: string, page: number = 1, limit: number = 10): Promise<{ data: AudioFile[], total: number }> {
+    const offset = (page - 1) * limit;
+    
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from('audio_files')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_name', userName);
+
+    if (countError) {
+      console.error('Error counting user audio files:', countError);
+      throw countError;
+    }
+
+    // Get paginated data
+    const { data: audioFiles, error } = await supabase
+      .from('audio_files')
+      .select('*')
+      .eq('user_name', userName)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Error fetching paginated user audio files:', error);
+      throw error;
+    }
+
+    return {
+      data: audioFiles || [],
+      total: count || 0
+    };
+  },
+
   // Get audio files by video ID
   async getByVideoId(videoId: string): Promise<AudioFile | null> {
     const { data: audioFile, error } = await supabase
@@ -173,6 +207,61 @@ export const audioFileService = {
     }
 
     return audioFiles || [];
+  },
+
+  // Get statistics for a user
+  async getUserStats(userName: string): Promise<{
+    total: number;
+    byType: Record<string, number>;
+    byStatus: Record<string, number>;
+    totalDuration: number;
+  }> {
+    const { data: audioFiles, error } = await supabase
+      .from('audio_files')
+      .select('audio_type, status, duration_seconds')
+      .eq('user_name', userName);
+
+    if (error) {
+      console.error('Error fetching user stats:', error);
+      throw error;
+    }
+
+    const stats = {
+      total: audioFiles?.length || 0,
+      byType: {} as Record<string, number>,
+      byStatus: {} as Record<string, number>,
+      totalDuration: 0
+    };
+
+    audioFiles?.forEach(file => {
+      // Count by type
+      stats.byType[file.audio_type] = (stats.byType[file.audio_type] || 0) + 1;
+      
+      // Count by status
+      stats.byStatus[file.status] = (stats.byStatus[file.status] || 0) + 1;
+      
+      // Sum duration
+      if (file.duration_seconds) {
+        stats.totalDuration += file.duration_seconds;
+      }
+    });
+
+    return stats;
+  },
+
+  // Delete an audio file record
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('audio_files')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting audio file:', error);
+      throw error;
+    }
+
+    console.log('Successfully deleted audio file record:', id);
   }
 };
 

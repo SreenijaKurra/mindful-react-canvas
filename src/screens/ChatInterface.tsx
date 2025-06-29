@@ -217,11 +217,13 @@ export const ChatInterface: React.FC = () => {
           if (audioFileRecord) {
             audioFileService.update(audioFileRecord.id, {
               status: 'completed',
+              duration_seconds: Math.ceil(text.length / 10), // Rough estimate based on reading speed
               metadata: {
                 ...audioFileRecord.metadata,
                 completion_timestamp: new Date().toISOString(),
                 voice_used: femaleVoice?.name || 'default',
-                duration_estimated: Math.ceil(text.length / 10) // Rough estimate
+                reading_speed_wpm: 150, // Words per minute estimate
+                actual_duration: Math.ceil(text.length / 10)
               }
             }).catch(console.warn);
           }
@@ -245,6 +247,22 @@ export const ChatInterface: React.FC = () => {
         };
 
         speechSynthesis.speak(utterance);
+        
+        // Store additional metadata about the TTS session
+        if (audioFileRecord) {
+          audioFileService.update(audioFileRecord.id, {
+            metadata: {
+              ...audioFileRecord.metadata,
+              tts_started: new Date().toISOString(),
+              voice_selected: femaleVoice?.name || 'default',
+              utterance_settings: {
+                rate: utterance.rate,
+                pitch: utterance.pitch,
+                volume: utterance.volume
+              }
+            }
+          }).catch(console.warn);
+        }
       }
     } catch (error) {
       console.error("Error playing audio:", error);
