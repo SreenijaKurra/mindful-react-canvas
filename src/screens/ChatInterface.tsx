@@ -398,16 +398,11 @@ export const ChatInterface: React.FC = () => {
           console.log('📊 Video status:', statusResponse);
           
           if (statusResponse.status === 'completed' && statusResponse.lipsync_url) {
+            console.log('✅ Lip sync completed, setting video URL:', statusResponse.lipsync_url);
             setTavusVideoUrl(statusResponse.lipsync_url);
-            console.log('✅ Setting video URL and opening player:', statusResponse.lipsync_url);
-            
-            // Small delay to ensure state is set before opening
-            setTimeout(() => {
-              console.log('🎬 Tavus player opened with URL:', statusResponse.lipsync_url);
-            }, 100);
-            
             setIsTavusPlayerOpen(true);
             setIsGeneratingVideo(false);
+            console.log('🎬 Video popup should now be visible');
             
             // Send analytics data
             await sendWebhookData({
@@ -656,6 +651,7 @@ export const ChatInterface: React.FC = () => {
       
       {/* Tavus Lip Sync Player */}
       {isTavusPlayerOpen && tavusVideoUrl && (
+        console.log('🎬 Rendering TavusLipSyncPlayer with:', { isTavusPlayerOpen, tavusVideoUrl }),
         <TavusLipSyncPlayer
           videoUrl={tavusVideoUrl}
           isOpen={isTavusPlayerOpen}

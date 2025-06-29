@@ -120,14 +120,16 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
     return null;
   }
 
-  console.log('TavusLipSyncPlayer: Rendering with videoUrl:', videoUrl);
+  console.log('🎬 TavusLipSyncPlayer: Rendering with videoUrl:', videoUrl);
+  console.log('🎬 TavusLipSyncPlayer: Props:', { isOpen, videoUrl: videoUrl.substring(0, 50) + '...', title, subtitle });
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.3 }}
         className={`fixed z-50 bg-black/95 backdrop-blur-sm rounded-xl border-2 border-cyan-400/70 shadow-2xl overflow-hidden ${
           isExpanded 
             ? "inset-4 md:inset-8" 
@@ -146,7 +148,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
         onMouseDown={handleMouseDown}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 bg-cyan-900/30 border-b border-cyan-400/30">
+        <div className="flex items-center justify-between p-3 bg-cyan-900/50 border-b border-cyan-400/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
             <div>
@@ -188,7 +190,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
         {/* Video Content */}
         <div className="relative flex-1 bg-black">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-10">
               <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-cyan-300 text-sm">Loading Danny...</span>
@@ -199,17 +201,19 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
           <video
             ref={videoRef}
             src={videoUrl}
+            key={videoUrl} // Force re-render when URL changes
             autoPlay
             muted={isMuted}
             playsInline
             controls={false}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover bg-black"
             style={{ 
               height: isExpanded ? 'calc(100vh - 200px)' : '200px'
             }}
             onPlay={() => {
               console.log('Video started playing');
               setIsPlaying(true);
+              setIsLoading(false);
             }}
             onPause={() => {
               console.log('Video paused');
@@ -225,6 +229,10 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             }}
             onCanPlay={() => {
               console.log('TavusLipSyncPlayer: Video can play');
+              setIsLoading(false);
+            }}
+            onLoadedData={() => {
+              console.log('TavusLipSyncPlayer: Video data loaded');
               setIsLoading(false);
             }}
             onError={(e) => {

@@ -196,23 +196,35 @@ export const getTavusLipSyncStatus = async (
     const data = await response.json();
     console.log("📊 Lip sync status response:", data);
     
+    // Map the response to our expected format
+    const mappedResponse: TavusLipSyncResponse = {
+      lipsync_id: data.lipsync_id || lipsyncId,
+      status: data.status,
+      lipsync_url: data.lipsync_url || data.video_url, // Handle both possible field names
+      download_url: data.download_url,
+      duration_seconds: data.duration_seconds,
+      file_size_bytes: data.file_size_bytes
+    };
+    
+    console.log("📊 Mapped lip sync response:", mappedResponse);
+    
     // Update database record if lip sync is completed
-    if (updateDatabase && data.status === 'completed' && data.lipsync_url) {
+    if (updateDatabase && mappedResponse.status === 'completed' && mappedResponse.lipsync_url) {
       try {
         const audioFile = await audioFileService.getByVideoId(lipsyncId);
         if (audioFile) {
           await audioFileService.update(audioFile.id, {
             status: 'completed',
-            audio_url: data.lipsync_url, // Store the final video URL
-            duration_seconds: data.duration_seconds,
-            file_size_bytes: data.file_size_bytes,
+            audio_url: mappedResponse.lipsync_url, // Store the final video URL
+            duration_seconds: mappedResponse.duration_seconds,
+            file_size_bytes: mappedResponse.file_size_bytes,
             metadata: {
               ...audioFile.metadata,
               completion_timestamp: new Date().toISOString(),
-              final_status_response: data,
+              final_status_response: mappedResponse,
               lipsync_generation_completed: true,
-              final_video_url: data.lipsync_url,
-              download_url: data.download_url,
+              final_video_url: mappedResponse.lipsync_url,
+              download_url: mappedResponse.download_url,
               step: 'completed'
             }
           });
@@ -223,14 +235,7 @@ export const getTavusLipSyncStatus = async (
       }
     }
     
-    return {
-      lipsync_id: data.lipsync_id,
-      status: data.status,
-      lipsync_url: data.lipsync_url,
-      download_url: data.download_url,
-      duration_seconds: data.duration_seconds,
-      file_size_bytes: data.file_size_bytes
-    };
+    return mappedResponse;
   } catch (error) {
     console.error("❌ Error getting lip sync status:", error);
     throw error;
