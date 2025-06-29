@@ -13,6 +13,7 @@
     "@daily-co/daily-js": "^0.73.0",
     "@daily-co/daily-react": "^0.22.0",
     "@radix-ui/react-slot": "^1.1.0",
+    "@supabase/supabase-js": "^2.39.0",
     "@tavus/tavus-js": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

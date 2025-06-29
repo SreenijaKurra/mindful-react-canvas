@@ -10,6 +10,7 @@ import { screenAtom } from "@/store/screens";
 import { X } from "lucide-react";
 import * as React from "react";
 import { apiTokenAtom } from "@/store/tokens";
+import { AudioFilesList } from "@/components/AudioFilesList";
 
 // Button Component
 const Button = React.forwardRef<
@@ -320,6 +321,14 @@ export const Settings: React.FC = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Audio Files Section */}
+          <div className="space-y-4 border-t border-gray-700 pt-6">
+            <h3 className="text-lg font-semibold text-white">Your Audio Files</h3>
+            <div className="max-h-96 overflow-y-auto">
+              <AudioFilesList userName={settings.name} limit={10} />
             </div>
           </div>
 

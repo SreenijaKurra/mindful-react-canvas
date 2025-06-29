@@ -1,3 +1,5 @@
+import { audioFileService } from "@/lib/supabase";
+
 interface OpenAIResponse {
   choices: Array<{
     message: {
@@ -8,6 +10,25 @@ interface OpenAIResponse {
 
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
   const API_KEY = "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";
+  
+  // Create initial database record for TTS generation
+  let audioFileRecord;
+  try {
+    audioFileRecord = await audioFileService.create({
+      user_name: userName,
+      message_text: userMessage,
+      audio_type: 'tts',
+      status: 'pending',
+      metadata: {
+        api_endpoint: "https://api.openai.com/v1/chat/completions",
+        model: "gpt-3.5-turbo",
+        request_timestamp: new Date().toISOString()
+      }
+    });
+    console.log('Created TTS audio file record:', audioFileRecord.id);
+  } catch (dbError) {
+    console.warn('Failed to create TTS database record (non-critical):', dbError);
+  }
   
   const systemPrompt = `You are a compassionate AI meditation guide and wellness coach. Your role is to:
 
@@ -55,10 +76,46 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
     }
 
     const data: OpenAIResponse = await response.json();
-    return data.choices[0]?.message?.content || "I'm here to help with your meditation practice. Could you tell me more about what you're looking for today?";
+    const responseText = data.choices[0]?.message?.content || "I'm here to help with your meditation practice. Could you tell me more about what you're looking for today?";
+    
+    // Update database record with successful response
+    if (audioFileRecord) {
+      try {
+        await audioFileService.update(audioFileRecord.id, {
+          status: 'completed',
+          metadata: {
+            ...audioFileRecord.metadata,
+            response_text: responseText,
+            completion_timestamp: new Date().toISOString(),
+            tokens_used: data.usage?.total_tokens || 0
+          }
+        });
+        console.log('Updated TTS audio file record with completion');
+      } catch (dbError) {
+        console.warn('Failed to update TTS database record (non-critical):', dbError);
+      }
+    }
+    
+    return responseText;
     
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
+    
+    // Update database record with error
+    if (audioFileRecord) {
+      try {
+        await audioFileService.update(audioFileRecord.id, {
+          status: 'failed',
+          metadata: {
+            ...audioFileRecord.metadata,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            error_timestamp: new Date().toISOString()
+          }
+        });
+      } catch (dbError) {
+        console.warn('Failed to update TTS database record with error (non-critical):', dbError);
+      }
+    }
     
     // Fallback responses for common topics
     const lowerMessage = userMessage.toLowerCase();

@@ -10,6 +10,7 @@ import { sendWebhookData } from "@/api/webhook";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
+import { audioFileService } from "@/lib/supabase";
 
 interface Message {
   id: string;
@@ -256,7 +257,7 @@ export const ChatInterface: React.FC = () => {
       console.log('Generating Tavus lip sync video for text:', text);
       
       // Generate lip sync video using Tavus API with your persona
-      const videoResponse = await generateTavusLipSyncVideo(token, text.substring(0, 500)); // Limit text length
+      const videoResponse = await generateTavusLipSyncVideo(token, text.substring(0, 500), settings.name); // Limit text length
       console.log('Video generation response:', videoResponse);
       
       // Poll for video completion
@@ -292,7 +293,26 @@ export const ChatInterface: React.FC = () => {
               session_type: "chat_lip_sync_response"
             });
             
+            // Log successful completion to console for demo
+            console.log('Audio file successfully stored in Supabase with video URL:', statusResponse.video_url);
+            
           } else if (statusResponse.status === 'failed') {
+            // Update database with failed status
+            try {
+              const audioFile = await audioFileService.getByVideoId(videoResponse.video_id);
+              if (audioFile) {
+                await audioFileService.update(audioFile.id, {
+                  status: 'failed',
+                  metadata: {
+                    ...audioFile.metadata,
+                    failure_reason: 'Video generation failed',
+                    failure_timestamp: new Date().toISOString()
+                  }
+                });
+              }
+            } catch (dbError) {
+              console.warn('Failed to update database with failure status:', dbError);
+            }
             throw new Error('Video generation failed');
           } else if (attempts < maxAttempts) {
             attempts++;
