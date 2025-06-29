@@ -22,7 +22,7 @@ const getInitialSettings = (): Settings => {
     greeting: "",
     context: "",
     persona: "p5bf051443c7",
-    replica: "",
+    replica: "rfb51183fe",
   };
 };
 

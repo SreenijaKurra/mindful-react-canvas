@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, X, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TavusLipSyncPlayerProps {
@@ -22,18 +22,22 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isLoading, setIsLoading] = useState(true);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  console.log('TavusLipSyncPlayer render:', { isOpen, videoUrl, title, subtitle });
 
   // Handle dragging for compact mode
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isExpanded) return;
+    e.preventDefault();
     const startX = e.clientX - position.x;
     const startY = e.clientY - position.y;
 
     const handleMouseMove = (e: MouseEvent) => {
       setPosition({
-        x: e.clientX - startX,
-        y: e.clientY - startY
+        x: Math.max(0, Math.min(window.innerWidth - 320, e.clientX - startX)),
+        y: Math.max(0, Math.min(window.innerHeight - 240, e.clientY - startY))
       });
     };
 
@@ -50,21 +54,40 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
   useEffect(() => {
     console.log('TavusLipSyncPlayer useEffect - isOpen:', isOpen, 'videoUrl:', videoUrl);
     if (videoRef.current && isOpen && videoUrl) {
-      console.log('TavusLipSyncPlayer: Loading video URL:', videoUrl);
-      videoRef.current.load(); // Reload the video element
+      console.log('TavusLipSyncPlayer: Setting up video with URL:', videoUrl);
       
-      // Wait a moment for the video to load, then play
-      const playVideo = async () => {
-        try {
-          await videoRef.current?.play();
-          console.log('TavusLipSyncPlayer: Video started playing');
-        } catch (error) {
-          console.error('TavusLipSyncPlayer: Error playing video:', error);
-        }
+      const video = videoRef.current;
+      
+      const handleCanPlay = () => {
+        console.log('TavusLipSyncPlayer: Video can play');
+        setIsLoading(false);
+        video.play().catch(error => {
+          console.error('TavusLipSyncPlayer: Error auto-playing video:', error);
+        });
       };
+
+      const handleLoadStart = () => {
+        console.log('TavusLipSyncPlayer: Video load started');
+        setIsLoading(true);
+      };
+
+      const handleError = (e: any) => {
+        console.error('TavusLipSyncPlayer: Video error:', e);
+        setIsLoading(false);
+      };
+
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('loadstart', handleLoadStart);
+      video.addEventListener('error', handleError);
       
-      // Small delay to ensure video is loaded
-      setTimeout(playVideo, 500);
+      // Force reload the video
+      video.load();
+      
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('loadstart', handleLoadStart);
+        video.removeEventListener('error', handleError);
+      };
     }
   }, [isOpen, videoUrl]);
 
@@ -73,7 +96,9 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        videoRef.current.play().catch(error => {
+          console.error('Error playing video:', error);
+        });
       }
       setIsPlaying(!isPlaying);
     }
@@ -103,7 +128,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
-        className={`fixed z-50 bg-black/90 backdrop-blur-sm rounded-xl border border-cyan-400/50 shadow-2xl overflow-hidden ${
+        className={`fixed z-50 bg-black/95 backdrop-blur-sm rounded-xl border-2 border-cyan-400/70 shadow-2xl overflow-hidden ${
           isExpanded 
             ? "inset-4 md:inset-8" 
             : "cursor-move"
@@ -121,7 +146,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
         onMouseDown={handleMouseDown}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 bg-gray-800/50 border-b border-cyan-400/30">
+        <div className="flex items-center justify-between p-3 bg-cyan-900/30 border-b border-cyan-400/30">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
             <div>
@@ -135,7 +160,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
               variant="ghost"
               size="icon"
               onClick={toggleMute}
-              className="h-8 w-8 text-gray-400 hover:text-white"
+              className="h-8 w-8 text-gray-300 hover:text-white"
             >
               {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </Button>
@@ -144,16 +169,16 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
               variant="ghost"
               size="icon"
               onClick={toggleExpand}
-              className="h-8 w-8 text-gray-400 hover:text-white"
+              className="h-8 w-8 text-gray-300 hover:text-white"
             >
-              {isExpanded ? "⊟" : "⊞"}
+              {isExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </Button>
             
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 text-gray-400 hover:text-white"
+              className="h-8 w-8 text-gray-300 hover:text-white"
             >
               <X className="size-4" />
             </Button>
@@ -162,6 +187,15 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
 
         {/* Video Content */}
         <div className="relative flex-1 bg-black">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-cyan-300 text-sm">Loading Danny...</span>
+              </div>
+            </div>
+          )}
+          
           <video
             ref={videoRef}
             src={videoUrl}
@@ -173,39 +207,56 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             style={{ 
               height: isExpanded ? 'calc(100vh - 200px)' : '200px'
             }}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            onLoadStart={() => console.log('TavusLipSyncPlayer: Video load started')}
-            onCanPlay={() => console.log('TavusLipSyncPlayer: Video can play')}
-            onError={(e) => console.error('TavusLipSyncPlayer: Video error:', e)}
+            onPlay={() => {
+              console.log('Video started playing');
+              setIsPlaying(true);
+            }}
+            onPause={() => {
+              console.log('Video paused');
+              setIsPlaying(false);
+            }}
+            onEnded={() => {
+              console.log('Video ended');
+              setIsPlaying(false);
+            }}
+            onLoadStart={() => {
+              console.log('TavusLipSyncPlayer: Video load started');
+              setIsLoading(true);
+            }}
+            onCanPlay={() => {
+              console.log('TavusLipSyncPlayer: Video can play');
+              setIsLoading(false);
+            }}
+            onError={(e) => {
+              console.error('TavusLipSyncPlayer: Video error:', e);
+              setIsLoading(false);
+            }}
           />
           
           {/* Play/Pause Overlay */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-            onClick={togglePlay}
-          >
-            <div className="bg-black/60 rounded-full p-3">
-              {isPlaying ? (
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <div className="w-1.5 h-4 bg-white rounded-sm mr-1"></div>
-                  <div className="w-1.5 h-4 bg-white rounded-sm"></div>
-                </div>
-              ) : (
-                <Play className="w-6 h-6 text-white ml-1" />
-              )}
+          {!isLoading && (
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+              onClick={togglePlay}
+            >
+              <div className="bg-black/60 rounded-full p-3">
+                {isPlaying ? (
+                  <Pause className="w-6 h-6 text-white" />
+                ) : (
+                  <Play className="w-6 h-6 text-white ml-1" />
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Status Indicator */}
           <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1">
             <span className="text-cyan-300 text-xs">
-              {isPlaying ? "Playing..." : "Paused"}
+              {isLoading ? "Loading..." : isPlaying ? "Playing..." : "Paused"}
             </span>
           </div>
 
-          {/* Lip Sync Indicator */}
+          {/* Danny Indicator */}
           <div className="absolute top-3 right-3 bg-cyan-400/20 backdrop-blur-sm rounded-full px-2 py-1">
             <span className="text-cyan-300 text-xs font-medium">
               🎬 Danny

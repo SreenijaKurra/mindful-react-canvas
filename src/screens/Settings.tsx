@@ -303,7 +303,7 @@ export const Settings: React.FC = () => {
                   id="replica"
                   value={settings.replica}
                   onChange={(e) => setSettings({ ...settings, replica: e.target.value })}
-                  placeholder="rfb51183fe"
+                  placeholder="rfb51183fe (Danny's Replica)"
                   className="bg-black/20 font-mono"
                   style={{ fontFamily: "'Source Code Pro', monospace" }}
                 />

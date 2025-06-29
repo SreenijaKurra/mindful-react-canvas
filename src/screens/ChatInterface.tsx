@@ -44,6 +44,16 @@ export const ChatInterface: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [currentVideoText, setCurrentVideoText] = useState<string>("");
 
+  // Force re-render when video popup state changes
+  useEffect(() => {
+    console.log('ChatInterface: Video popup state changed:', {
+      isTavusPlayerOpen,
+      tavusVideoUrl: !!tavusVideoUrl,
+      isGeneratingVideo,
+      videoError
+    });
+  }, [isTavusPlayerOpen, tavusVideoUrl, isGeneratingVideo, videoError]);
+
   // Debug logging for video popup state
   useEffect(() => {
     console.log('Video popup state:', {
@@ -246,7 +256,7 @@ export const ChatInterface: React.FC = () => {
       console.log('Generating Tavus lip sync video for text:', text);
       
       // Generate lip sync video using Tavus API with your persona
-      const videoResponse = await generateTavusLipSyncVideo(token, text);
+      const videoResponse = await generateTavusLipSyncVideo(token, text.substring(0, 500)); // Limit text length
       console.log('Video generation response:', videoResponse);
       
       // Poll for video completion
@@ -261,10 +271,15 @@ export const ChatInterface: React.FC = () => {
           if (statusResponse.status === 'completed' && statusResponse.video_url) {
             setTavusVideoUrl(statusResponse.video_url);
             console.log('Setting video URL and opening player:', statusResponse.video_url);
+            
+            // Small delay to ensure state is set before opening
+            setTimeout(() => {
+              setIsTavusPlayerOpen(true);
+              console.log('Tavus player opened with URL:', statusResponse.video_url);
+            }, 100);
+            
             setIsTavusPlayerOpen(true);
             setIsGeneratingVideo(false);
-            
-            console.log('Opening Tavus player with video URL:', statusResponse.video_url);
             
             // Send analytics data
             await sendWebhookData({
@@ -281,7 +296,7 @@ export const ChatInterface: React.FC = () => {
             throw new Error('Video generation failed');
           } else if (attempts < maxAttempts) {
             attempts++;
-            setTimeout(pollVideoStatus, 10000); // Check every 10 seconds
+            setTimeout(pollVideoStatus, 5000); // Check every 5 seconds
           } else {
             throw new Error('Video generation timed out');
           }
@@ -293,7 +308,7 @@ export const ChatInterface: React.FC = () => {
       };
       
       // Start polling after initial delay
-      setTimeout(pollVideoStatus, 5000);
+      setTimeout(pollVideoStatus, 3000); // Start checking after 3 seconds
       
       // Send analytics data
       await sendWebhookData({
@@ -492,10 +507,10 @@ export const ChatInterface: React.FC = () => {
       </div>
       
       {/* Tavus Lip Sync Player */}
-      {tavusVideoUrl && isTavusPlayerOpen && (
+      {isTavusPlayerOpen && tavusVideoUrl && (
         <TavusLipSyncPlayer
           videoUrl={tavusVideoUrl}
-          isOpen={true}
+          isOpen={isTavusPlayerOpen}
           onClose={() => {
             console.log('Closing Tavus player');
             setIsTavusPlayerOpen(false);

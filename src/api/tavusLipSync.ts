@@ -3,8 +3,9 @@ import { getDefaultStore } from "jotai";
 
 interface TavusVideoResponse {
   video_id: string;
-  video_url: string;
+  video_url?: string;
   status: string;
+  download_url?: string;
 }
 
 export const generateTavusLipSyncVideo = async (
@@ -19,13 +20,15 @@ export const generateTavusLipSyncVideo = async (
   // Get settings from Jotai store
   const settings = getDefaultStore().get(settingsAtom);
   
-  console.log('Creating Tavus lip sync video with persona:', settings.persona);
+  console.log('Creating Tavus lip sync video with replica:', settings.replica);
   console.log('Text to synthesize:', text);
   
+  // Use the correct Tavus API v2 format for video generation
   const payload = {
-    replica_id: settings.replica || "rfb51183fe",
+    replica_id: settings.replica || "rfb51183fe", // Danny's replica ID
     script: text,
-    background_url: "" // Use default background
+    background_url: null, // Use replica's default background
+    callback_url: null // No callback needed for this demo
   };
   
   console.log('Sending payload to Tavus API:', payload);
@@ -51,8 +54,11 @@ export const generateTavusLipSyncVideo = async (
       } else if (response.status === 400) {
         try {
           const errorData = JSON.parse(errorText);
-          if (errorData.message?.includes("concurrent")) {
+          if (errorData.message?.includes("concurrent") || errorData.message?.includes("maximum")) {
             throw new Error("You have reached the maximum number of active video generations. Please wait for current videos to complete or try again in a few minutes.");
+          }
+          if (errorData.error?.includes("replica_id")) {
+            throw new Error("Invalid replica ID. Please check your replica settings.");
           }
         } catch (parseError) {
           // If we can't parse the error, fall through to generic error
@@ -92,10 +98,14 @@ export const getTavusVideoStatus = async (
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get video status: ${response.status}`);
+      const errorText = await response.text();
+      console.error("Error getting video status:", errorText);
+      throw new Error(`Failed to get video status: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log("Video status response:", data);
+    return data;
   } catch (error) {
     console.error("Error getting video status:", error);
     throw error;
