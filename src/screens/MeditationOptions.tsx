@@ -3,20 +3,11 @@ import React from "react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { Button } from "@/components/ui/button";
-import { Video, MessageCircle, Headphones, BookOpen, Play } from "lucide-react";
-import { VideoPopup } from "@/components/VideoPopup";
-import { useVideoPopup } from "@/hooks/useVideoPopup";
+import { Video, MessageCircle, Headphones, BookOpen } from "lucide-react";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 export const MeditationOptions: React.FC = () => {
   const [, setScreenState] = useAtom(screenAtom);
-  const { 
-    isVideoPopupOpen, 
-    isVideoPlaying, 
-    openVideoPopup, 
-    closeVideoPopup, 
-    toggleVideoPlay 
-  } = useVideoPopup();
 
   const handleVideoGuide = () => {
     setScreenState({ currentScreen: "instructions" });
@@ -161,18 +152,6 @@ export const MeditationOptions: React.FC = () => {
             </Button>
           </div>
 
-          {/* Quick Avatar Preview */}
-          <div className="mt-6 text-center">
-            <Button
-              onClick={openVideoPopup}
-              variant="outline"
-              className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-white"
-            >
-              <Play className="size-4 mr-2" />
-              Preview Your AI Guide
-            </Button>
-          </div>
-
           <div className="mt-8 text-center">
             <button
               onClick={() => setScreenState({ currentScreen: "intro" })}
@@ -183,17 +162,6 @@ export const MeditationOptions: React.FC = () => {
           </div>
         </div>
       </AnimatedTextBlockWrapper>
-      
-      {/* Video Popup */}
-      <VideoPopup
-        isOpen={isVideoPopupOpen}
-        onClose={closeVideoPopup}
-        avatarVideoSrc={gloriaVideo}
-        isPlaying={isVideoPlaying}
-        onTogglePlay={toggleVideoPlay}
-        title="AI Meditation Guide Preview"
-        subtitle="Meet your mindfulness companion"
-      />
     </DialogWrapper>
   );
 };

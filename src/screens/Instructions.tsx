@@ -16,9 +16,6 @@ import { Button } from "@/components/ui/button";
 import { apiTokenAtom } from "@/store/tokens";
 import { quantum } from 'ldrs';
 import gloriaVideo from "@/assets/video/gloria.mp4";
-import { VideoPopup } from "@/components/VideoPopup";
-import { useVideoPopup } from "@/hooks/useVideoPopup";
-import { Play } from "lucide-react";
 
 // Register the quantum loader
 quantum.register();
@@ -78,13 +75,6 @@ export const Instructions: React.FC = () => {
   }, []);
   const [isPlayingSound, setIsPlayingSound] = useState(false);
 
-  const { 
-    isVideoPopupOpen, 
-    isVideoPlaying, 
-    openVideoPopup, 
-    closeVideoPopup, 
-    toggleVideoPlay 
-  } = useVideoPopup();
 
   useDailyEvent(
     "camera-error",
@@ -289,18 +279,6 @@ export const Instructions: React.FC = () => {
           </div>
         </div>
         
-        {/* Avatar Preview Option */}
-        <div className="mb-8 text-center">
-          <Button
-            onClick={openVideoPopup}
-            variant="outline"
-            className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-white"
-          >
-            <Play className="size-4 mr-2" />
-            Preview Your Guide First
-          </Button>
-        </div>
-        
         <span className="absolute bottom-6 px-4 text-sm text-gray-500 sm:bottom-8 sm:px-8 text-center">
           By starting this video session, I accept the{' '}
           <a href="#" className="text-primary hover:underline">Terms of Use</a> and acknowledge the{' '}
@@ -314,17 +292,6 @@ export const Instructions: React.FC = () => {
           </button>
         </span>
       </AnimatedTextBlockWrapper>
-      
-      {/* Video Popup */}
-      <VideoPopup
-        isOpen={isVideoPopupOpen}
-        onClose={closeVideoPopup}
-        avatarVideoSrc={gloriaVideo}
-        isPlaying={isVideoPlaying}
-        onTogglePlay={toggleVideoPlay}
-        title="AI Meditation Guide Preview"
-        subtitle="Your meditation companion"
-      />
     </DialogWrapper>
   );
 };
