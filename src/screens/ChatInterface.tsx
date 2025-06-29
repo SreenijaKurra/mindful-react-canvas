@@ -9,7 +9,7 @@ import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
 import { VideoPopup } from "@/components/VideoPopup";
 import { useVideoPopup } from "@/hooks/useVideoPopup";
-import { createConversation } from "@/api";
+import { createConversation, generateAIResponse } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
@@ -99,30 +99,8 @@ export const ChatInterface: React.FC = () => {
       // No need to log here as it's already logged as a warning
     }
 
-    // Simple response logic - in a real app, this would call your AI service
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('stress') || lowerMessage.includes('anxious') || lowerMessage.includes('worried')) {
-      return "I understand you're feeling stressed. Let's try a simple breathing exercise: breathe in for 4 counts, hold for 4, then breathe out for 6. Would you like me to guide you through this in a video session where I can see how you're doing?";
-    }
-    
-    if (lowerMessage.includes('sleep') || lowerMessage.includes('insomnia') || lowerMessage.includes('tired')) {
-      return "Sleep challenges can be really difficult. I can guide you through some relaxation techniques that might help. Would you like to try a personalized bedtime meditation? I can offer more tailored guidance if we switch to a video session.";
-    }
-    
-    if (lowerMessage.includes('meditation') || lowerMessage.includes('mindfulness')) {
-      return "Meditation is a wonderful practice! There are many different types - breathing meditation, body scans, loving-kindness meditation. What draws you to meditation? I can provide much more personalized guidance if you'd like to start a video session with me.";
-    }
-    
-    if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated') || lowerMessage.includes('upset')) {
-      return "It sounds like you're experiencing some difficult emotions. That's completely normal and valid. Sometimes it helps to acknowledge these feelings without judgment. Would you like to explore this together in a face-to-face video session where I can better support you?";
-    }
-
-    if (lowerMessage.includes('video') || lowerMessage.includes('face to face') || lowerMessage.includes('see you')) {
-      return "I'd love to meet you face-to-face! Video sessions allow me to provide more personalized guidance, read your energy, and create a deeper connection. Click the video button below to start our live session.";
-    }
-    
-    return "Thank you for sharing that with me. I'm here to support your wellness journey. For more personalized guidance and a deeper connection, would you like to switch to a video session where we can work together more closely?";
+    // Use OpenAI to generate intelligent responses
+    return await generateAIResponse(userMessage, settings.name);
   };
 
   const handleSendMessage = async () => {
@@ -296,16 +274,6 @@ export const ChatInterface: React.FC = () => {
           </div>
           
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleVideoSession}
-              title="Start Video Session"
-              className="bg-black/20 border-gray-600 hover:bg-gray-700"
-            >
-              <Video className="size-5" />
-            </Button>
-            
             <Button
               variant="outline"
               size="icon"
