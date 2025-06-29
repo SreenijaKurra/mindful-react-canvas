@@ -9,9 +9,9 @@ import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
 import { VideoPopup } from "@/components/VideoPopup";
 import { useVideoPopup } from "@/hooks/useVideoPopup";
-import { createConversation, generateAIResponse } from "@/api";
+import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
-import { LipSyncAvatar } from "@/components/LipSyncAvatar";
+import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
@@ -42,6 +42,8 @@ export const ChatInterface: React.FC = () => {
   const [currentSpeakingMessage, setCurrentSpeakingMessage] = useState<string | null>(null);
   const [token] = useAtom(apiTokenAtom);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [tavusVideoUrl, setTavusVideoUrl] = useState<string | null>(null);
+  const [isTavusPlayerOpen, setIsTavusPlayerOpen] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const { 
     isVideoPopupOpen, 
@@ -229,47 +231,87 @@ export const ChatInterface: React.FC = () => {
 
   const handlePlayVideo = async (text: string) => {
     setVideoError(null); // Clear any previous errors
+    setIsGeneratingVideo(true);
     
     if (!token) {
       setVideoError("No API token available. Please configure your API key in settings.");
+      setIsGeneratingVideo(false);
       return;
     }
 
     try {
-      setIsGeneratingVideo(true);
+      console.log('Generating Tavus lip sync video for text:', text);
       
-      // Create a Tavus conversation for this specific message
-      const conversation = await createConversation(token);
+      // Generate lip sync video using Tavus API with your persona
+      const videoResponse = await generateTavusLipSyncVideo(token, text);
+      console.log('Video generation response:', videoResponse);
       
-      // For now, open the video popup with the avatar
-      // In a full implementation, you would send the text to Tavus
-      // and get back a personalized video response
-      openVideoPopup();
+      // Poll for video completion
+      let attempts = 0;
+      const maxAttempts = 30; // 5 minutes max wait time
+      
+      const pollVideoStatus = async (): Promise<void> => {
+        try {
+          const statusResponse = await getTavusVideoStatus(token, videoResponse.video_id);
+          console.log('Video status:', statusResponse);
+          
+          if (statusResponse.status === 'completed' && statusResponse.video_url) {
+            setTavusVideoUrl(statusResponse.video_url);
+            setIsTavusPlayerOpen(true);
+            setIsGeneratingVideo(false);
+            
+            // Send analytics data
+            await sendWebhookData({
+              event_type: "tavus_lip_sync_completed",
+              user_name: settings.name,
+              timestamp: new Date().toISOString(),
+              message_text: text,
+              video_id: videoResponse.video_id,
+              video_url: statusResponse.video_url,
+              session_type: "chat_lip_sync_response"
+            });
+            
+          } else if (statusResponse.status === 'failed') {
+            throw new Error('Video generation failed');
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(pollVideoStatus, 10000); // Check every 10 seconds
+          } else {
+            throw new Error('Video generation timed out');
+          }
+        } catch (error) {
+          console.error('Error checking video status:', error);
+          setVideoError('Failed to generate video. Please try again.');
+          setIsGeneratingVideo(false);
+        }
+      };
+      
+      // Start polling after initial delay
+      setTimeout(pollVideoStatus, 5000);
       
       // Send analytics data
       await sendWebhookData({
-        event_type: "video_response_requested",
+        event_type: "tavus_lip_sync_requested",
         user_name: settings.name,
         timestamp: new Date().toISOString(),
         message_text: text,
-        conversation_id: conversation.conversation_id,
-        session_type: "chat_video_response"
+        video_id: videoResponse.video_id,
+        session_type: "chat_lip_sync_response"
       });
       
     } catch (error) {
-      console.error("Error generating video response:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to generate video response";
+      console.error("Error generating lip sync video:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate lip sync video";
       setVideoError(errorMessage);
+      setIsGeneratingVideo(false);
       
-      // If it's a concurrent conversations error, provide additional guidance
-      if (errorMessage.includes("maximum number of active video sessions")) {
+      // If it's a concurrent videos error, provide additional guidance
+      if (errorMessage.includes("maximum number of active video")) {
         // Auto-clear the error after 10 seconds to reduce UI clutter
         setTimeout(() => {
           setVideoError(null);
         }, 10000);
       }
-    } finally {
-      setIsGeneratingVideo(false);
     }
   };
 
@@ -281,18 +323,12 @@ export const ChatInterface: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-black/20 backdrop-blur-sm relative">
           <div className="flex items-center gap-3">
-            {/* Replace static avatar with lip sync avatar */}
-            <LipSyncAvatar 
-              isPlaying={isPlayingAudio}
-              text={currentSpeakingMessage || ""}
-              onComplete={() => {
-                setIsPlayingAudio(false);
-                setCurrentSpeakingMessage(null);
-              }}
-            />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
+              <span className="text-white font-semibold">AI</span>
+            </div>
             <div>
               <h2 className="text-white font-semibold">Mindful Moments Guide</h2>
-              <p className="text-gray-400 text-sm">Your AI meditation companion</p>
+              <p className="text-gray-400 text-sm">Powered by Tavus Persona: {settings.persona}</p>
             </div>
           </div>
           
@@ -358,12 +394,12 @@ export const ChatInterface: React.FC = () => {
                         onClick={() => handlePlayVideo(message.text)}
                         disabled={isGeneratingVideo}
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Play Video Response"
+                        title="Generate Lip Sync Video"
                       >
                         {isGeneratingVideo ? (
                           <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <Play className="size-3" />
+                          <Video className="size-3" />
                         )}
                       </Button>
                     </div>
@@ -387,21 +423,6 @@ export const ChatInterface: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
         
-        {/* Floating lip sync avatar when speaking */}
-        {isPlayingAudio && currentSpeakingMessage && (
-          <div className="absolute top-20 right-4 z-30 bg-black/80 backdrop-blur-sm rounded-2xl p-4 border border-cyan-400/50">
-            <LipSyncAvatar 
-              isPlaying={true}
-              text={currentSpeakingMessage}
-              onComplete={() => {
-                setIsPlayingAudio(false);
-                setCurrentSpeakingMessage(null);
-              }}
-            />
-            <p className="text-xs text-cyan-300 text-center mt-2">Speaking...</p>
-          </div>
-        )}
-
         {/* Input */}
         <div className="p-4 border-t border-gray-700 bg-black/20 backdrop-blur-sm">
           {/* Video Error Alert */}
@@ -410,9 +431,9 @@ export const ChatInterface: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-2">
                   <p className="text-red-200 text-sm">{videoError}</p>
-                  {videoError.includes("maximum number of active video sessions") && (
+                  {videoError.includes("maximum number of active video") && (
                     <p className="text-red-300 text-xs mt-1 opacity-80">
-                      💡 Tip: Try the regular video session option instead, or wait a few minutes before trying again.
+                      💡 Tip: Wait for current video generations to complete, or try again in a few minutes.
                     </p>
                   )}
                 </div>
@@ -464,7 +485,21 @@ export const ChatInterface: React.FC = () => {
         </div>
       </div>
       
-      {/* Video Popup */}
+      {/* Tavus Lip Sync Player */}
+      {tavusVideoUrl && (
+        <TavusLipSyncPlayer
+          videoUrl={tavusVideoUrl}
+          isOpen={isTavusPlayerOpen}
+          onClose={() => {
+            setIsTavusPlayerOpen(false);
+            setTavusVideoUrl(null);
+          }}
+          title="AI Meditation Guide"
+          subtitle="Personalized lip sync response"
+        />
+      )}
+      
+      {/* Fallback Video Popup */}
       <VideoPopup
         isOpen={isVideoPopupOpen}
         onClose={closeVideoPopup}

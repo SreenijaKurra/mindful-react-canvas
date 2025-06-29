@@ -1,0 +1,109 @@
+import { settingsAtom } from "@/store/settings";
+import { getDefaultStore } from "jotai";
+
+interface TavusVideoResponse {
+  video_id: string;
+  video_url: string;
+  status: string;
+}
+
+export const generateTavusLipSyncVideo = async (
+  token: string,
+  text: string
+): Promise<TavusVideoResponse> => {
+  // Validate token before making API call
+  if (!token || token.trim() === '') {
+    throw new Error("API token is required. Please enter a valid Tavus API key in settings.");
+  }
+  
+  // Get settings from Jotai store
+  const settings = getDefaultStore().get(settingsAtom);
+  
+  console.log('Creating Tavus lip sync video with persona:', settings.persona);
+  console.log('Text to synthesize:', text);
+  
+  const payload = {
+    persona_id: settings.persona || "p5bf051443c7",
+    script: text,
+    background_url: null, // Use default background
+    voice_settings: {
+      stability: 0.5,
+      similarity_boost: 0.75,
+      style: 0.0,
+      use_speaker_boost: true
+    }
+  };
+  
+  console.log('Sending payload to Tavus API:', payload);
+  
+  try {
+    const response = await fetch("https://tavusapi.com/v2/videos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": token.trim(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response?.ok) {
+      const errorText = await response.text();
+      console.error("Tavus API Error Response:", errorText);
+      
+      if (response.status === 401) {
+        throw new Error("Invalid API token. Please check your Tavus API key in settings and ensure it's correct.");
+      } else if (response.status === 403) {
+        throw new Error("Access forbidden. Please verify your API key has the necessary permissions.");
+      } else if (response.status === 400) {
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.message?.includes("concurrent")) {
+            throw new Error("You have reached the maximum number of active video generations. Please wait for current videos to complete or try again in a few minutes.");
+          }
+        } catch (parseError) {
+          // If we can't parse the error, fall through to generic error
+        }
+        throw new Error(`Request failed: ${errorText}`);
+      } else {
+        throw new Error(`Failed to generate lip sync video: ${response.status} - ${errorText}`);
+      }
+    }
+
+    const data = await response.json();
+    console.log("Tavus Video API Response:", data);
+    
+    return data;
+  } catch (error) {
+    console.error("Error in generateTavusLipSyncVideo:", error);
+    
+    // Provide more specific error messages for common network issues
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error("Unable to connect to the Tavus video service. Please check your internet connection and try again.");
+    }
+    
+    throw error;
+  }
+};
+
+export const getTavusVideoStatus = async (
+  token: string,
+  videoId: string
+): Promise<TavusVideoResponse> => {
+  try {
+    const response = await fetch(`https://tavusapi.com/v2/videos/${videoId}`, {
+      method: "GET",
+      headers: {
+        "x-api-key": token.trim(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get video status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting video status:", error);
+    throw error;
+  }
+};
