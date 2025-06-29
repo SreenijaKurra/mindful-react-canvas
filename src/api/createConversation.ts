@@ -64,7 +64,7 @@ export const createConversation = async (
     const data = await response.json();
     console.log("API Response:", data);
   
-    // Send session start data to webhook
+    // Send session start data to webhook (non-blocking)
     try {
       await sendWebhookData({
         event_type: "meditation_session_started",
@@ -74,13 +74,19 @@ export const createConversation = async (
         session_type: "guided_meditation"
       });
     } catch (webhookError) {
-      console.error("Failed to send webhook data:", webhookError);
-      // Don't fail the conversation creation if webhook fails
+      console.warn("Webhook notification failed (non-critical):", webhookError);
+      // Continue with conversation creation even if webhook fails
     }
     
     return data;
   } catch (error) {
     console.error("Error in createConversation:", error);
+    
+    // Provide more specific error messages for common network issues
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error("Unable to connect to the meditation service. Please check your internet connection and try again.");
+    }
+    
     throw error;
   }
 };
