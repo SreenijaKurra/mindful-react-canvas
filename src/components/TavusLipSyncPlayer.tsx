@@ -116,24 +116,20 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
   };
 
   if (!isOpen || !videoUrl) {
-    console.log('TavusLipSyncPlayer: Not rendering - isOpen:', isOpen, 'videoUrl:', !!videoUrl);
     return null;
   }
 
-  console.log('🎬 TavusLipSyncPlayer: Rendering with videoUrl:', videoUrl);
-  console.log('🎬 TavusLipSyncPlayer: Props:', { isOpen, videoUrl: videoUrl.substring(0, 50) + '...', title, subtitle });
-
   return (
-    <AnimatePresence mode="wait">
+    <div className="fixed inset-0 z-[9999] pointer-events-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.3 }}
-        className={`fixed z-50 bg-black/95 backdrop-blur-sm rounded-xl border-2 border-cyan-400/70 shadow-2xl overflow-hidden ${
+        className={`absolute bg-black/95 backdrop-blur-sm rounded-xl border-2 border-cyan-400/70 shadow-2xl overflow-hidden pointer-events-auto ${
           isExpanded 
-            ? "inset-4 md:inset-8" 
-            : "cursor-move"
+            ? "inset-4 md:inset-8 w-auto h-auto" 
+            : "cursor-move w-80 h-60"
         }`}
         style={
           isExpanded 
@@ -141,48 +137,46 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             : { 
                 left: position.x, 
                 top: position.y,
-                width: '320px',
-                height: '240px'
               }
         }
         onMouseDown={handleMouseDown}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 bg-cyan-900/50 border-b border-cyan-400/50">
+        <div className="flex items-center justify-between p-2 bg-cyan-900/80 border-b border-cyan-400/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
             <div>
-              <h3 className="text-white text-sm font-medium">{title}</h3>
-              <p className="text-cyan-300 text-xs">{subtitle}</p>
+              <h3 className="text-white text-xs font-medium">{title}</h3>
+              <p className="text-cyan-300 text-[10px] truncate max-w-32">{subtitle}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleMute}
-              className="h-8 w-8 text-gray-300 hover:text-white"
+              className="h-6 w-6 text-gray-300 hover:text-white"
             >
-              {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              {isMuted ? <VolumeX className="size-3" /> : <Volume2 className="size-3" />}
             </Button>
             
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleExpand}
-              className="h-8 w-8 text-gray-300 hover:text-white"
+              className="h-6 w-6 text-gray-300 hover:text-white"
             >
-              {isExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              {isExpanded ? <Minimize2 className="size-3" /> : <Maximize2 className="size-3" />}
             </Button>
             
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 text-gray-300 hover:text-white"
+              className="h-6 w-6 text-gray-300 hover:text-white"
             >
-              <X className="size-4" />
+              <X className="size-3" />
             </Button>
           </div>
         </div>
@@ -190,10 +184,10 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
         {/* Video Content */}
         <div className="relative flex-1 bg-black">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
               <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-cyan-300 text-sm">Loading Danny...</span>
+                <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-cyan-300 text-xs">Loading...</span>
               </div>
             </div>
           )}
@@ -207,9 +201,6 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             playsInline
             controls={false}
             className="w-full h-full object-cover bg-black"
-            style={{ 
-              height: isExpanded ? 'calc(100vh - 200px)' : '200px'
-            }}
             onPlay={() => {
               console.log('Video started playing');
               setIsPlaying(true);
@@ -244,34 +235,34 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
           {/* Play/Pause Overlay */}
           {!isLoading && (
             <div 
-              className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+              className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
               onClick={togglePlay}
             >
-              <div className="bg-black/60 rounded-full p-3">
+              <div className="bg-black/70 rounded-full p-2">
                 {isPlaying ? (
-                  <Pause className="w-6 h-6 text-white" />
+                  <Pause className="w-4 h-4 text-white" />
                 ) : (
-                  <Play className="w-6 h-6 text-white ml-1" />
+                  <Play className="w-4 h-4 text-white ml-0.5" />
                 )}
               </div>
             </div>
           )}
 
           {/* Status Indicator */}
-          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1">
-            <span className="text-cyan-300 text-xs">
+          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-0.5">
+            <span className="text-cyan-300 text-[10px]">
               {isLoading ? "Loading..." : isPlaying ? "Playing..." : "Paused"}
             </span>
           </div>
 
           {/* Danny Indicator */}
-          <div className="absolute top-3 right-3 bg-cyan-400/20 backdrop-blur-sm rounded-full px-2 py-1">
-            <span className="text-cyan-300 text-xs font-medium">
+          <div className="absolute top-2 right-2 bg-cyan-400/20 backdrop-blur-sm rounded-full px-2 py-0.5">
+            <span className="text-cyan-300 text-[10px] font-medium">
               🎬 Danny
             </span>
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </div>
   );
 };

@@ -651,7 +651,6 @@ export const ChatInterface: React.FC = () => {
       
       {/* Tavus Lip Sync Player */}
       {isTavusPlayerOpen && tavusVideoUrl && (
-        console.log('🎬 Rendering TavusLipSyncPlayer with:', { isTavusPlayerOpen, tavusVideoUrl }),
         <TavusLipSyncPlayer
           videoUrl={tavusVideoUrl}
           isOpen={isTavusPlayerOpen}
