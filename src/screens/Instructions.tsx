@@ -28,15 +28,20 @@ const useCreateConversationMutation = () => {
   const token = useAtomValue(apiTokenAtom);
 
   const createConversationRequest = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       if (!token) {
         throw new Error("Token is required");
       }
+      console.log("Creating conversation with token:", token ? "Token present" : "No token");
       const conversation = await createConversation(token);
+      console.log("Conversation created successfully:", conversation);
       setConversation(conversation);
       setScreenState({ currentScreen: "conversation" });
     } catch (error) {
-      setError(error as string);
+      console.error("Error creating conversation:", error);
+      setError(error instanceof Error ? error.message : "Failed to create conversation");
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +51,7 @@ const useCreateConversationMutation = () => {
     isLoading,
     error,
     createConversationRequest,
+    setError,
   };
 };
 
@@ -53,11 +59,10 @@ export const Instructions: React.FC = () => {
   const daily = useDaily();
   const { currentMic, setMicrophone, setSpeaker } = useDevices();
   const [, setScreenState] = useAtom(screenAtom);
-  const { createConversationRequest } = useCreateConversationMutation();
+  const { createConversationRequest, isLoading: isCreatingConversation, error: conversationError, setError } = useCreateConversationMutation();
   const [getUserMediaError, setGetUserMediaError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
-  const [error, setError] = useState(false);
   const audio = useMemo(() => {
     const audioObj = new Audio(zoomSound);
     audioObj.volume = 0.7;
@@ -75,6 +80,7 @@ export const Instructions: React.FC = () => {
   const handleClick = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       setIsPlayingSound(true);
       
       audio.currentTime = 0;
@@ -111,11 +117,12 @@ export const Instructions: React.FC = () => {
       if (micDeviceId) {
         await createConversationRequest();
       } else {
+        console.error("No microphone device ID found");
         setGetUserMediaError(true);
       }
     } catch (error) {
       console.error(error);
-      setError(true);
+      setError(error instanceof Error ? error.message : "Failed to start session");
     } finally {
       setIsLoading(false);
       setIsLoadingConversation(false);
@@ -141,14 +148,44 @@ export const Instructions: React.FC = () => {
               speed="1.75"
               color="white"
             ></l-quantum>
+            <p className="text-white text-lg">
+              {isPlayingSound ? "Preparing your session..." : "Connecting to your meditation guide..."}
+            </p>
           </div>
         </AnimatedTextBlockWrapper>
       </DialogWrapper>
     );
   }
 
-  if (error) {
-    return <ConversationError onClick={handleClick} />;
+  if (conversationError) {
+    return (
+      <DialogWrapper>
+        <AnimatedTextBlockWrapper>
+          <div className="flex flex-col items-center justify-center gap-6 py-12">
+            <div className="text-red-400 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-white mb-4">Connection Error</h2>
+            <p className="text-gray-300 text-center max-w-md mb-6">
+              {conversationError}
+            </p>
+            <Button
+              onClick={() => {
+                setError(null);
+                handleClick();
+              }}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Try Again
+            </Button>
+            <button
+              onClick={() => setScreenState({ currentScreen: "meditationOptions" })}
+              className="text-gray-400 hover:text-white transition-colors duration-200 text-sm underline"
+            >
+              ← Choose a different meditation style
+            </button>
+          </div>
+        </AnimatedTextBlockWrapper>
+      </DialogWrapper>
+    );
   }
 
   return (
@@ -180,7 +217,7 @@ export const Instructions: React.FC = () => {
         <Button
           onClick={handleClick}
           className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-8 py-2 text-sm text-white transition-all duration-200 hover:text-primary mb-12 disabled:opacity-50"
-          disabled={isLoading}
+          disabled={isLoading || isCreatingConversation}
           style={{
             height: '48px',
             transition: 'all 0.2s ease-in-out',
@@ -194,7 +231,7 @@ export const Instructions: React.FC = () => {
           }}
         >
           <Video className="size-5" />
-          Begin Meditation Session
+          {isLoading || isCreatingConversation ? "Connecting..." : "Begin Meditation Session"}
           {getUserMediaError && (
             <div className="absolute -top-1 left-0 right-0 flex items-center gap-1 text-wrap rounded-lg border bg-red-500 p-2 text-white backdrop-blur-sm">
               <AlertTriangle className="text-red size-4" />

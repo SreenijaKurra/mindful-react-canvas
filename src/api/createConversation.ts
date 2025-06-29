@@ -1,7 +1,7 @@
 import { IConversation } from "@/types";
 import { settingsAtom } from "@/store/settings";
 import { getDefaultStore } from "jotai";
-import { sendWebhookData } from "@/api/webhook";
+import { sendWebhookData } from "./webhook";
 
 export const createConversation = async (
   token: string,
@@ -31,33 +31,42 @@ export const createConversation = async (
   
   console.log('Sending payload to API:', payload);
   
-  const response = await fetch("https://tavusapi.com/v2/conversations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": token ?? "",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response?.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-  
-  // Send session start data to webhook
   try {
-    await sendWebhookData({
-      event_type: "meditation_session_started",
-      conversation_id: data.conversation_id,
-      user_name: settings.name,
-      timestamp: new Date().toISOString(),
-      session_type: "guided_meditation"
+    const response = await fetch("https://tavusapi.com/v2/conversations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": token ?? "",
+      },
+      body: JSON.stringify(payload),
     });
-  } catch (error) {
-    console.error("Failed to send webhook data:", error);
-  }
+
+    if (!response?.ok) {
+      const errorText = await response.text();
+      console.error("API Error Response:", errorText);
+      throw new Error(`Failed to create conversation: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log("API Response:", data);
   
-  return data;
+    // Send session start data to webhook
+    try {
+      await sendWebhookData({
+        event_type: "meditation_session_started",
+        conversation_id: data.conversation_id,
+        user_name: settings.name,
+        timestamp: new Date().toISOString(),
+        session_type: "guided_meditation"
+      });
+    } catch (webhookError) {
+      console.error("Failed to send webhook data:", webhookError);
+      // Don't fail the conversation creation if webhook fails
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in createConversation:", error);
+    throw error;
+  }
 };
