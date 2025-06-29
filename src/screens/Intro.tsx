@@ -68,3 +68,6 @@ export const Intro: React.FC = () => {
     </AnimatedWrapper>
   );
 };
+
+  )
+}
