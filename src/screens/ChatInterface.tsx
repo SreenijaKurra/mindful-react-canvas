@@ -11,7 +11,6 @@ import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } fr
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { audioFileService, isSupabaseAvailable } from "@/lib/supabase";
-import { secureAudioService } from "@/api/supabaseService";
 
 interface Message {
   id: string;
@@ -36,7 +35,6 @@ export const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [currentSpeakingMessage, setCurrentSpeakingMessage] = useState<string | null>(null);
   const [token] = useAtom(apiTokenAtom);
@@ -162,10 +160,6 @@ export const ChatInterface: React.FC = () => {
   const handlePlayAudio = async (text: string) => {
     // Stop any currently playing audio
     setCurrentSpeakingMessage(null);
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    }
 
     // Create database record for TTS audio
     let audioFileRecord;
@@ -291,10 +285,6 @@ export const ChatInterface: React.FC = () => {
   const stopAudio = () => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
-    }
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
     }
     setIsPlayingAudio(false);
     setCurrentSpeakingMessage(null);

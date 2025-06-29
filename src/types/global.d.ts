@@ -8,3 +8,5 @@ interface Window {
   webkitSpeechRecognition?: any;
   speechSynthesis?: SpeechSynthesis;
 }
+
+declare var SpeechRecognition: any;
