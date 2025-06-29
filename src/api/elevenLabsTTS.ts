@@ -26,7 +26,7 @@ export const generateElevenLabsAudio = async (
 
   // Default voice settings for natural speech
   const defaultOptions: ElevenLabsTTSOptions = {
-    voice_id: options.voice_id || "21m00Tcm4TlvDq8ikWAM", // Rachel voice (default)
+    voice_id: options.voice_id || "IKne3meq5aSn9XLyUdCD", // Custom voice (default)
     model_id: options.model_id || "eleven_monolingual_v1",
     voice_settings: {
       stability: 0.5,
@@ -204,6 +204,7 @@ export const getElevenLabsVoices = async (): Promise<any[]> => {
 
 // Predefined voice options for easy selection
 export const ELEVENLABS_VOICES = {
+  CUSTOM: "IKne3meq5aSn9XLyUdCD", // Your custom voice (default)
   RACHEL: "21m00Tcm4TlvDq8ikWAM", // Female, calm
   DOMI: "AZnzlk1XvdvUeBnXmlld", // Female, strong
   BELLA: "EXAVITQu4vr4xnSDxMaL", // Female, soft
