@@ -358,7 +358,12 @@ export const ChatInterface: React.FC = () => {
           }
         } catch (error) {
           console.error('Error checking video status:', error);
-          setVideoError('Failed to generate video. Please try again.');
+          // Check if it's a network connectivity issue
+          if (error instanceof Error && error.message === 'Failed to fetch') {
+            setVideoError('Unable to connect to the Tavus video service. Please check your internet connection and try again.');
+          } else {
+            setVideoError('Failed to generate video. Please try again.');
+          }
           setIsGeneratingVideo(false);
         }
       };
