@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { X, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,12 +26,10 @@ export const VideoPopup: React.FC<VideoPopupProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
-  const [isDragging, setIsDragging] = useState(false);
 
   // Handle dragging
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isExpanded) return; // Don't allow dragging when expanded
-    setIsDragging(true);
     const startX = e.clientX - position.x;
     const startY = e.clientY - position.y;
 
@@ -43,7 +41,6 @@ export const VideoPopup: React.FC<VideoPopupProps> = ({
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };

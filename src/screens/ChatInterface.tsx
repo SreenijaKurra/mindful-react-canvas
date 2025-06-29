@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { DialogWrapper, AnimatedTextBlockWrapper } from "@/components/DialogWrapper";
+import { DialogWrapper } from "@/components/DialogWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Video, Settings, Mic, MicOff } from "lucide-react";
