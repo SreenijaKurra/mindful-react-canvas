@@ -54,25 +54,3 @@ export const sendWebhookData = async (data: WebhookData): Promise<void> => {
     throw error;
   }
 };
-
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...data,
-        source: "meditation_video_interface",
-        app_version: "1.0.0"
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Webhook failed with status: ${response.status}`);
-    }
-
-    console.log("Webhook data sent successfully:", data);
-  } catch (error) {
-    console.error("Error sending webhook data:", error);
-    throw error;
-  }
-};
