@@ -18,8 +18,9 @@ The fastest way to get started vibecoding with Tavus CVI. This React quickstart 
 - Tailwind CSS
 - Framer Motion
 - Supabase (Database)
-- Tavus API (Lip-sync videos)
-- OpenAI API (Text generation)
+- Tavus API (AI Video Generation)
+- OpenAI API (AI Text Generation)
+- Daily.co (Video Calling)
 <br></br>
 ## 🧑‍💻 Try it Live
 Spin up this template in under a minute with StackBlitz:

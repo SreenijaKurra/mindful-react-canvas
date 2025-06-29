@@ -314,10 +314,10 @@ export const Settings: React.FC = () => {
                 <Label htmlFor="apiToken">API Token</Label>
                 <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3">
                   <p className="text-green-300 text-sm">
-                    ✅ Demo Mode: API Key is configured and secured
+                    ✅ Demo Mode: API Key is configured and secured for neuroheart org
                   </p>
                   <p className="text-gray-400 text-xs mt-1">
-                    In production, API keys should be stored securely on the backend
+                    Supabase connected to neuroheart organization project
                   </p>
                 </div>
               </div>
@@ -344,4 +344,4 @@ export const Settings: React.FC = () => {
       </AnimatedTextBlockWrapper>
     </DialogWrapper>
   );
-}; 
+};
