@@ -3,28 +3,14 @@ import React from "react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { Button } from "@/components/ui/button";
-import { Video, MessageCircle, Headphones, BookOpen } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 export const MeditationOptions: React.FC = () => {
   const [, setScreenState] = useAtom(screenAtom);
 
-  const handleVideoGuide = () => {
-    setScreenState({ currentScreen: "instructions" });
-  };
-
   const handleChatBot = () => {
     setScreenState({ currentScreen: "chatInterface" });
-  };
-
-  const handleGuidedReading = () => {
-    // This would navigate to text-based meditation
-    console.log("Guided reading selected");
-  };
-
-  const handleBreathingExercise = () => {
-    // This would navigate to breathing exercises
-    console.log("Breathing exercise selected");
   };
 
   return (
@@ -45,19 +31,19 @@ export const MeditationOptions: React.FC = () => {
               className="text-3xl sm:text-4xl lg:text-5xl font-semibold mb-4"
               style={{ fontFamily: 'Source Code Pro, monospace' }}
             >
-              <span className="text-white">Choose Your</span>{" "}
-              <span style={{ color: '#9EEAFF' }}>Meditation Style</span>
+              <span className="text-white">Welcome to</span>{" "}
+              <span style={{ color: '#9EEAFF' }}>Mindful Moments</span>
             </h1>
             <p className="max-w-[650px] text-center text-base sm:text-lg text-gray-400">
-              Select the type of meditation experience that feels right for you today
+              Start a conversation with your AI meditation guide for personalized support and guidance
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+          <div className="w-full max-w-md">
             {/* Chat Interface Option */}
             <Button
               onClick={handleChatBot}
-              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
+              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary w-full"
               style={{
                 backgroundColor: 'rgba(0,0,0,0.3)',
                 backdropFilter: 'blur(10px)',
@@ -71,84 +57,12 @@ export const MeditationOptions: React.FC = () => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <MessageCircle className="size-12 text-primary mb-2" />
-              <h3 className="text-xl font-semibold">Chat with AI Guide</h3>
+              <MessageCircle className="size-16 text-primary mb-2" />
+              <h3 className="text-2xl font-semibold">Start Meditation Chat</h3>
               <p className="text-sm text-gray-300 text-center">
-                Text-based conversation with avatar popup option
+                Begin your mindfulness journey with AI-guided conversation
               </p>
-              <span className="text-xs text-primary font-medium">RECOMMENDED</span>
-            </Button>
-
-            {/* Video Guide Option */}
-            <Button
-              onClick={handleVideoGuide}
-              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
-              style={{
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 254, 0.4)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <Video className="size-12 text-green-400 mb-2" />
-              <h3 className="text-xl font-semibold">Direct Video Session</h3>
-              <p className="text-sm text-gray-300 text-center">
-                Jump straight into face-to-face meditation coaching
-              </p>
-            </Button>
-
-            {/* Guided Reading Option */}
-            <Button
-              onClick={handleGuidedReading}
-              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
-              style={{
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 254, 0.4)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <Headphones className="size-12 text-purple-400 mb-2" />
-              <h3 className="text-xl font-semibold">Audio Meditation</h3>
-              <p className="text-sm text-gray-300 text-center">
-                Voice-guided sessions with calming background sounds
-              </p>
-            </Button>
-
-            {/* Guided Reading Option */}
-            <Button
-              onClick={handleGuidedReading}
-              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
-              style={{
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 254, 0.4)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <BookOpen className="size-12 text-red-400 mb-2" />
-              <h3 className="text-xl font-semibold">Guided Reading</h3>
-              <p className="text-sm text-gray-300 text-center">
-                Text-based meditation with mindfulness exercises
-              </p>
+              <span className="text-xs text-primary font-medium">GET STARTED</span>
             </Button>
           </div>
 
