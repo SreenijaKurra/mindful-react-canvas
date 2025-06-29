@@ -204,11 +204,31 @@ export const Conversation: React.FC = () => {
         {remoteParticipantIds?.length > 0 ? (
           <>
             <Timer />
-            <Video
-              id={remoteParticipantIds[0]}
-              className="size-full"
-              tileClassName="!object-cover"
-            />
+            <div className="relative size-full">
+              <Video
+                id={remoteParticipantIds[0]}
+                className="size-full"
+                tileClassName="!object-cover"
+              />
+              
+              {/* Video Controls Overlay */}
+              <div className="absolute top-4 right-4 z-20 flex gap-2">
+                <Button
+                  size="icon"
+                  className="bg-red-600 hover:bg-red-700 border-2 border-white shadow-lg"
+                  onClick={leaveConversation}
+                  title="End Session"
+                >
+                  <PhoneIcon className="size-6 rotate-[135deg] text-white" />
+                </Button>
+              </div>
+              
+              {/* Session Info */}
+              <div className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+                <p className="text-white text-sm font-medium">Live Meditation Session</p>
+                <p className="text-gray-300 text-xs">Click the red button to end</p>
+              </div>
+            </div>
           </>
         ) : (
           <div className="flex h-full items-center justify-center">
@@ -224,44 +244,51 @@ export const Conversation: React.FC = () => {
             id={localSessionId}
             tileClassName="!object-cover"
             className={cn(
-              "absolute bottom-20 right-4 aspect-video h-40 w-24 overflow-hidden rounded-lg border-2 border-[#22C5FE] shadow-[0_0_20px_rgba(34,197,254,0.3)] sm:bottom-12 lg:h-auto lg:w-52"
+              "absolute bottom-24 right-4 aspect-video h-32 w-24 overflow-hidden rounded-lg border-2 border-[#22C5FE] shadow-[0_0_20px_rgba(34,197,254,0.3)] sm:bottom-20 sm:h-40 sm:w-32 lg:h-48 lg:w-36"
             )}
           />
         )}
-        <div className="absolute bottom-8 right-1/2 z-10 flex translate-x-1/2 justify-center gap-4">
+        
+        {/* Bottom Controls */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex justify-center gap-3 bg-black/60 backdrop-blur-sm rounded-full px-6 py-3">
           <Button
             size="icon"
-            className="border border-[#22C5FE] shadow-[0_0_20px_rgba(34,197,254,0.2)]"
+            className="bg-gray-700 hover:bg-gray-600 border border-gray-500"
             variant="secondary"
             onClick={toggleAudio}
+            title={isMicEnabled ? "Mute microphone" : "Unmute microphone"}
           >
             {!isMicEnabled ? (
-              <MicOffIcon className="size-6" />
+              <MicOffIcon className="size-5 text-red-400" />
             ) : (
-              <MicIcon className="size-6" />
+              <MicIcon className="size-5 text-green-400" />
             )}
           </Button>
+          
           <Button
             size="icon"
-            className="border border-[#22C5FE] shadow-[0_0_20px_rgba(34,197,254,0.2)]"
+            className="bg-gray-700 hover:bg-gray-600 border border-gray-500"
             variant="secondary"
             onClick={toggleVideo}
+            title={isCameraEnabled ? "Turn off camera" : "Turn on camera"}
           >
             {!isCameraEnabled ? (
-              <VideoOffIcon className="size-6" />
+              <VideoOffIcon className="size-5 text-red-400" />
             ) : (
-              <VideoIcon className="size-6" />
+              <VideoIcon className="size-5 text-green-400" />
             )}
           </Button>
+          
           <Button
             size="icon"
-            className="bg-[rgba(251,36,71,0.80)] backdrop-blur hover:bg-[rgba(251,36,71,0.60)] border border-[rgba(251,36,71,0.9)] shadow-[0_0_20px_rgba(251,36,71,0.3)]"
-            variant="secondary"
+            className="bg-red-600 hover:bg-red-700 border-2 border-white shadow-lg"
             onClick={leaveConversation}
+            title="End meditation session"
           >
-            <PhoneIcon className="size-6 rotate-[135deg]" />
+            <PhoneIcon className="size-5 rotate-[135deg] text-white" />
           </Button>
         </div>
+        
         <DailyAudio />
       </div>
     </DialogWrapper>

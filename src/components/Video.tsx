@@ -14,7 +14,7 @@ export default function Video({
 
   return (
     <div
-      className={cn("bg-[rgba(248,250,252,0.08)]", className, {
+      className={cn("bg-black relative", className, {
         "hidden size-0": videoState.isOff,
       })}
     >
@@ -22,10 +22,15 @@ export default function Video({
         automirror
         sessionId={id}
         type="video"
-        className={cn("size-full object-cover", tileClassName, {
+        className={cn("size-full object-cover rounded-lg", tileClassName, {
           hidden: videoState.isOff,
         })}
       />
+      {videoState.isOff && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 rounded-lg">
+          <p className="text-white text-sm">Camera is off</p>
+        </div>
+      )}
     </div>
   );
 }
