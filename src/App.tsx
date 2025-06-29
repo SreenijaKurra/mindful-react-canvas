@@ -1,27 +1,51 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { useAtom } from "jotai";
+import { screenAtom } from "./store/screens";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
+import {
+  IntroLoading,
+  Outage,
+  OutOfMinutes,
+  Intro,
+  Instructions,
+  Conversation,
+  FinalScreen,
+  Settings,
+} from "./screens";
 
-const queryClient = new QueryClient();
+function App() {
+  const [{ currentScreen }] = useAtom(screenAtom);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case "introLoading":
+        return <IntroLoading />;
+      case "outage":
+        return <Outage />;
+      case "outOfMinutes":
+        return <OutOfMinutes />;
+      case "intro":
+        return <Intro />;
+      case "settings":
+        return <Settings />;
+      case "instructions":
+        return <Instructions />;
+      case "conversation":
+        return <Conversation />;
+      case "finalScreen":
+        return <FinalScreen />;
+      default:
+        return <IntroLoading />;
+    }
+  };
+
+  return (
+    <main className="flex h-svh flex-col items-center justify-between gap-3 p-5 sm:gap-4 lg:p-8 bg-black">
+      {currentScreen !== "introLoading" && <Header />}
+      {renderScreen()}
+      {currentScreen !== "introLoading" && <Footer />}
+    </main>
+  );
+}
 
 export default App;

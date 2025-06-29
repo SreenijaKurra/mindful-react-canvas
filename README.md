@@ -1,73 +1,55 @@
-# Welcome to your Lovable project
+# Tavus Vibecode Quickstart
 
-## Project info
+## 🚀 Introduction
 
-**URL**: https://lovable.dev/projects/50562607-b2da-432b-a2e8-912ba5527971
+The fastest way to get started vibecoding with Tavus CVI. This React quickstart template provides everything you need to create interactive video experiences powered by Tavus's Conversational Video Interface technology.
 
-## How can I edit this code?
+> ⚠️ **Important Note**: This is a development template only. For production use, you must:
+> - Never expose your Tavus API keys in the frontend
+> - Implement a secure backend service to handle API calls
+> - Use environment variables and proper key management
+> - Follow security best practices for handling sensitive credentials
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/50562607-b2da-432b-a2e8-912ba5527971) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
+<br></br>
+## 🛠️ Tech Stack
 - React
-- shadcn-ui
+- TypeScript
+- Vite
 - Tailwind CSS
+- Framer Motion
+<br></br>
+## 🧑‍💻 Try it Live
+Spin up this template in under a minute with StackBlitz:
 
-## How can I deploy this project?
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/Tavus-Engineering/tavus-vibecode-quickstart?file=src%2FApp.tsx)
 
-Simply open [Lovable](https://lovable.dev/projects/50562607-b2da-432b-a2e8-912ba5527971) and click on Share -> Publish.
+<br></br>
+## ⚡ Quick Start
 
-## Can I connect a custom domain to my Lovable project?
+1. **Get your API credentials:**
+   - Create an account on [Tavus Platform](https://platform.tavus.io/api-keys)
+   - Generate your API token
 
-Yes, you can!
+2. **Run the template:**
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+3. **Customize your persona:**
+   - Update the `persona_id` in `createConversation.ts` with your own
+   - Learn how to [create your own persona](https://docs.tavus.io/sections/conversational-video-interface/creating-a-persona) on the [Tavus Platform](https://platform.tavus.io/)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+   ```typescript
+   body: JSON.stringify({
+     persona_id: "your_persona_id_here",
+   }),
+   ```
+
+<br></br>
+## 📚 Resources
+
+- [Tavus Documentation](https://docs.tavus.io/)
+- [API Reference](https://docs.tavus.io/api-reference/)
+- [Tavus Platform](https://platform.tavus.io/)
+- [Daily React Reference](https://docs.daily.co/reference/daily-react)
