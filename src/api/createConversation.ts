@@ -1,7 +1,7 @@
 import { IConversation } from "@/types";
 import { settingsAtom } from "@/store/settings";
 import { getDefaultStore } from "jotai";
-import { sendWebhookData } from "./webhook";
+import { sendWebhookData } from "@/api/webhook";
 
 export const createConversation = async (
   token: string,
