@@ -42,7 +42,6 @@ export const Intro: React.FC = () => {
               <p className="text-green-300 text-sm text-center">
                 ✅ Demo Mode Active - API Key Configured
               </p>
-            </p>
           </div>
 
           <AudioButton 
