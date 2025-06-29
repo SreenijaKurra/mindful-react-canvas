@@ -454,61 +454,10 @@ export const ChatInterface: React.FC = () => {
 
   // Function to get sample video from Supabase storage
   const getSampleTavusVideo = async (): Promise<string> => {
-    if (!supabase) {
-      throw new Error('Supabase not configured');
-    }
-
-    try {
-      // List files in the audio-files bucket to find sample videos
-      const { data: files, error } = await supabase.storage
-        .from('audio-files')
-        .list('', {
-          limit: 100,
-          sortBy: { column: 'name', order: 'asc' }
-        });
-
-      if (error) {
-        console.error('Error listing files:', error);
-        throw new Error('Failed to access storage bucket');
-      }
-
-      console.log('📁 Files in storage bucket:', files);
-
-      // Look for video files (mp4, mov, etc.)
-      const videoFiles = files?.filter(file => 
-        file.name.toLowerCase().includes('tavus') || 
-        file.name.toLowerCase().includes('lipsync') ||
-        file.name.toLowerCase().includes('sample') ||
-        file.name.toLowerCase().endsWith('.mp4') ||
-        file.name.toLowerCase().endsWith('.mov')
-      ) || [];
-
-      console.log('🎬 Video files found:', videoFiles);
-
-      if (videoFiles.length === 0) {
-        throw new Error('No sample video files found in storage bucket');
-      }
-
-      // Use the first video file found
-      const sampleFile = videoFiles[0];
-      console.log('📹 Using sample file:', sampleFile.name);
-
-      // Get public URL for the sample video
-      const { data: urlData } = supabase.storage
-        .from('audio-files')
-        .getPublicUrl(sampleFile.name);
-
-      if (!urlData.publicUrl) {
-        throw new Error('Failed to get public URL for sample video');
-      }
-
-      console.log('✅ Sample video public URL:', urlData.publicUrl);
-      return urlData.publicUrl;
-
-    } catch (error) {
-      console.error('Error getting sample video:', error);
-      throw error;
-    }
+    // Use the specific video URL you provided from Supabase storage
+    const sampleVideoUrl = 'https://zeftfvudetoboalralss.supabase.co/storage/v1/object/public/audio-files/wb378fb5ffb3f.mp4';
+    console.log('✅ Using specific sample video URL:', sampleVideoUrl);
+    return sampleVideoUrl;
   };
 
   return (
