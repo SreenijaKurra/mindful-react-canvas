@@ -11,6 +11,7 @@ import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } fr
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { audioFileService } from "@/lib/supabase";
+import { secureAudioService } from "@/api/supabaseService";
 
 interface Message {
   id: string;

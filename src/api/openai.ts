@@ -1,4 +1,5 @@
 import { audioFileService } from "@/lib/supabase";
+import { secureAudioService } from "./supabaseService";
 
 interface OpenAIResponse {
   choices: Array<{
@@ -17,7 +18,7 @@ export const generateAIResponse = async (userMessage: string, userName?: string)
   // Create initial database record for AI text generation
   let audioFileRecord;
   try {
-    audioFileRecord = await audioFileService.create({
+    audioFileRecord = await secureAudioService.createSecure({
       user_name: userName,
       message_text: userMessage,
       audio_type: 'ai_text_generation',
@@ -86,7 +87,7 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
     // Update database record with successful response
     if (audioFileRecord) {
       try {
-        await audioFileService.update(audioFileRecord.id, {
+        await secureAudioService.updateSecure(audioFileRecord.id, {
           status: 'completed',
           metadata: {
             ...audioFileRecord.metadata,
@@ -111,7 +112,7 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
     // Update database record with error
     if (audioFileRecord) {
       try {
-        await audioFileService.update(audioFileRecord.id, {
+        await secureAudioService.updateSecure(audioFileRecord.id, {
           status: 'failed',
           metadata: {
             ...audioFileRecord.metadata,

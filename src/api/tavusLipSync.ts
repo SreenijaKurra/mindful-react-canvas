@@ -1,6 +1,7 @@
 import { settingsAtom } from "@/store/settings";
 import { getDefaultStore } from "jotai";
 import { audioFileService } from "@/lib/supabase";
+import { secureAudioService } from "./supabaseService";
 
 interface TavusVideoResponse {
   video_id: string;

@@ -47,12 +47,12 @@ Spin up this template in under a minute with StackBlitz:
 4. **Set up Supabase:**
    - Create a Supabase project in the neuroheart org
    - Run the migration: `supabase/migrations/create_audio_files_neuroheart.sql`
-   - Add your Supabase URL and anon key to `.env`
+   - Add your Supabase URL, anon key, and service role key to `.env`
 
 5. **Configure environment variables:**
    ```bash
    cp .env.example .env
-   # Add your actual API keys and Supabase credentials
+   # Service role key is now securely configured for backend operations
    ```
 
    ```typescript

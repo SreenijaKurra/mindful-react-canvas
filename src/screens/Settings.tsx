@@ -314,10 +314,13 @@ export const Settings: React.FC = () => {
                 <Label htmlFor="apiToken">API Token</Label>
                 <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3">
                   <p className="text-green-300 text-sm">
-                    ✅ Demo Mode: API Key is configured and secured for neuroheart org
+                    ✅ Secure Mode: Service role key configured for neuroheart org
                   </p>
                   <p className="text-gray-400 text-xs mt-1">
-                    Supabase connected to neuroheart organization project
+                    Backend service role key: ****...3-A (secured)
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Frontend anon key: ****...dsw (public)
                   </p>
                 </div>
               </div>
