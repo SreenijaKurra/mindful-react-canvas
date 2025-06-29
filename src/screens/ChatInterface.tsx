@@ -40,6 +40,7 @@ export const ChatInterface: React.FC = () => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [token] = useAtom(apiTokenAtom);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const { 
     isVideoPopupOpen, 
     isVideoPlaying, 
@@ -241,8 +242,10 @@ export const ChatInterface: React.FC = () => {
   };
 
   const handlePlayVideo = async (text: string) => {
+    setVideoError(null); // Clear any previous errors
+    
     if (!token) {
-      console.error("No API token available for video generation");
+      setVideoError("No API token available. Please configure your API key in settings.");
       return;
     }
 
@@ -269,6 +272,7 @@ export const ChatInterface: React.FC = () => {
       
     } catch (error) {
       console.error("Error generating video response:", error);
+      setVideoError(error instanceof Error ? error.message : "Failed to generate video response");
     } finally {
       setIsGeneratingVideo(false);
     }
@@ -388,6 +392,23 @@ export const ChatInterface: React.FC = () => {
 
         {/* Input */}
         <div className="p-4 border-t border-gray-700 bg-black/20 backdrop-blur-sm">
+          {/* Video Error Alert */}
+          {videoError && (
+            <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-red-200 text-sm">{videoError}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setVideoError(null)}
+                  className="h-6 w-6 text-red-200 hover:text-white"
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Input

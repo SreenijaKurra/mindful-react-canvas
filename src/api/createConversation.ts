@@ -56,6 +56,16 @@ export const createConversation = async (
         throw new Error("Invalid API token. Please check your Tavus API key in settings and ensure it's correct.");
       } else if (response.status === 403) {
         throw new Error("Access forbidden. Please verify your API key has the necessary permissions.");
+      } else if (response.status === 400) {
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.message === "User has reached maximum concurrent conversations") {
+            throw new Error("You have reached the maximum number of active video sessions. Please end your current session before starting a new one, or try again in a few minutes.");
+          }
+        } catch (parseError) {
+          // If we can't parse the error, fall through to generic error
+        }
+        throw new Error(`Request failed: ${errorText}`);
       } else {
         throw new Error(`Failed to create conversation: ${response.status} - ${errorText}`);
       }
