@@ -10,7 +10,7 @@ import { sendWebhookData } from "@/api/webhook";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
-import { audioFileService } from "@/lib/supabase";
+import { audioFileService, isSupabaseAvailable } from "@/lib/supabase";
 import { secureAudioService } from "@/api/supabaseService";
 
 interface Message {
@@ -169,21 +169,25 @@ export const ChatInterface: React.FC = () => {
 
     // Create database record for TTS audio
     let audioFileRecord;
-    try {
-      audioFileRecord = await audioFileService.create({
-        user_name: settings.name,
-        message_text: text,
-        audio_type: 'tts',
-        status: 'pending',
-        metadata: {
-          tts_engine: 'web_speech_api',
-          request_timestamp: new Date().toISOString(),
-          text_length: text.length
-        }
-      });
-      console.log('✅ Created TTS audio file record:', audioFileRecord.id);
-    } catch (dbError) {
-      console.warn('⚠️ Failed to create TTS database record (non-critical):', dbError);
+    if (isSupabaseAvailable) {
+      try {
+        audioFileRecord = await audioFileService.create({
+          user_name: settings.name,
+          message_text: text,
+          audio_type: 'tts',
+          status: 'pending',
+          metadata: {
+            tts_engine: 'web_speech_api',
+            request_timestamp: new Date().toISOString(),
+            text_length: text.length
+          }
+        });
+        console.log('✅ Created TTS audio file record:', audioFileRecord.id);
+      } catch (dbError) {
+        console.warn('⚠️ Failed to create TTS database record (non-critical):', dbError);
+      }
+    } else {
+      console.log('📝 TTS audio playback (Supabase logging disabled)');
     }
 
     try {
@@ -215,7 +219,7 @@ export const ChatInterface: React.FC = () => {
           setCurrentSpeakingMessage(null);
           
           // Update database record with completion
-          if (audioFileRecord) {
+          if (audioFileRecord && isSupabaseAvailable) {
             audioFileService.update(audioFileRecord.id, {
               status: 'completed',
               duration_seconds: Math.ceil(text.length / 10), // Rough estimate based on reading speed
@@ -235,7 +239,7 @@ export const ChatInterface: React.FC = () => {
           setCurrentSpeakingMessage(null);
           
           // Update database record with error
-          if (audioFileRecord) {
+          if (audioFileRecord && isSupabaseAvailable) {
             audioFileService.update(audioFileRecord.id, {
               status: 'failed',
               metadata: {
@@ -250,7 +254,7 @@ export const ChatInterface: React.FC = () => {
         speechSynthesis.speak(utterance);
         
         // Store additional metadata about the TTS session
-        if (audioFileRecord) {
+        if (audioFileRecord && isSupabaseAvailable) {
           audioFileService.update(audioFileRecord.id, {
             metadata: {
               ...audioFileRecord.metadata,
@@ -271,7 +275,7 @@ export const ChatInterface: React.FC = () => {
       setCurrentSpeakingMessage(null);
       
       // Update database record with error
-      if (audioFileRecord) {
+      if (audioFileRecord && isSupabaseAvailable) {
         audioFileService.update(audioFileRecord.id, {
           status: 'failed',
           metadata: {

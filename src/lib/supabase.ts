@@ -4,28 +4,38 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-  throw new Error('Supabase configuration is missing. Please check your environment variables.');
-}
+// Check if Supabase is properly configured
+const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && 
+  supabaseUrl !== 'https://your-neuroheart-project.supabase.co' && 
+  supabaseAnonKey !== 'your-neuroheart-anon-key');
 
 // Frontend client with anon key (safe for browser)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Backend service client (server-side only)
 const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
-export const supabaseAdmin = supabaseServiceKey 
+export const supabaseAdmin = (isSupabaseConfigured && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
 
-console.log('✅ Supabase clients initialized:', {
-  url: supabaseUrl,
-  hasAnonKey: !!supabaseAnonKey,
-  hasServiceKey: !!supabaseServiceKey
-});
+if (!isSupabaseConfigured) {
+  console.warn('⚠️ Supabase not configured. Database features will be disabled.');
+  console.warn('To enable Supabase, please:');
+  console.warn('1. Create a Supabase project');
+  console.warn('2. Copy .env.example to .env');
+  console.warn('3. Update VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY with your project credentials');
+} else {
+  console.log('✅ Supabase clients initialized:', {
+    url: supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+    hasServiceKey: !!supabaseServiceKey
+  });
+}
 
-// Validate environment variables
+// Export configuration status
+export const isSupabaseAvailable = isSupabaseConfigured;
 
 // Database types
 export interface AudioFile {
@@ -47,6 +57,25 @@ export interface AudioFile {
 export const audioFileService = {
   // Create a new audio file record
   async create(data: Partial<AudioFile>): Promise<AudioFile> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - skipping audio file record creation');
+      // Return a mock record for development
+      return {
+        id: `mock-${Date.now()}`,
+        user_name: data.user_name,
+        message_text: data.message_text || '',
+        audio_type: data.audio_type || 'ai_text_generation',
+        audio_url: data.audio_url,
+        video_id: data.video_id,
+        status: data.status || 'pending',
+        duration_seconds: data.duration_seconds,
+        file_size_bytes: data.file_size_bytes,
+        metadata: data.metadata || {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as AudioFile;
+    }
+
     console.log('Creating audio file record:', data);
     
     const { data: audioFile, error } = await supabase
@@ -76,6 +105,16 @@ export const audioFileService = {
 
   // Update an existing audio file record
   async update(id: string, data: Partial<AudioFile>): Promise<AudioFile> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - skipping audio file record update');
+      // Return a mock updated record
+      return {
+        id,
+        ...data,
+        updated_at: new Date().toISOString()
+      } as AudioFile;
+    }
+
     console.log('Updating audio file record:', id, data);
     
     const { data: audioFile, error } = await supabase
@@ -99,6 +138,11 @@ export const audioFileService = {
 
   // Get audio file by ID
   async getById(id: string): Promise<AudioFile | null> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch audio file');
+      return null;
+    }
+
     const { data: audioFile, error } = await supabase
       .from('audio_files')
       .select('*')
@@ -118,6 +162,11 @@ export const audioFileService = {
 
   // Get audio files by user
   async getByUser(userName: string): Promise<AudioFile[]> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch user audio files');
+      return [];
+    }
+
     const { data: audioFiles, error } = await supabase
       .from('audio_files')
       .select('*')
@@ -134,6 +183,11 @@ export const audioFileService = {
 
   // Get audio files by user with pagination
   async getByUserPaginated(userName: string, page: number = 1, limit: number = 10): Promise<{ data: AudioFile[], total: number }> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch paginated user audio files');
+      return { data: [], total: 0 };
+    }
+
     const offset = (page - 1) * limit;
     
     // Get total count
@@ -168,6 +222,11 @@ export const audioFileService = {
 
   // Get audio files by video ID
   async getByVideoId(videoId: string): Promise<AudioFile | null> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch audio file by video ID');
+      return null;
+    }
+
     const { data: audioFile, error } = await supabase
       .from('audio_files')
       .select('*')
@@ -187,6 +246,11 @@ export const audioFileService = {
 
   // Get recent audio files
   async getRecent(limit: number = 50): Promise<AudioFile[]> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch recent audio files');
+      return [];
+    }
+
     const { data: audioFiles, error } = await supabase
       .from('audio_files')
       .select('*')
@@ -203,6 +267,11 @@ export const audioFileService = {
 
   // Get audio files by status
   async getByStatus(status: AudioFile['status']): Promise<AudioFile[]> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch audio files by status');
+      return [];
+    }
+
     const { data: audioFiles, error } = await supabase
       .from('audio_files')
       .select('*')
@@ -224,6 +293,16 @@ export const audioFileService = {
     byStatus: Record<string, number>;
     totalDuration: number;
   }> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - cannot fetch user stats');
+      return {
+        total: 0,
+        byType: {},
+        byStatus: {},
+        totalDuration: 0
+      };
+    }
+
     const { data: audioFiles, error } = await supabase
       .from('audio_files')
       .select('audio_type, status, duration_seconds')
@@ -259,6 +338,11 @@ export const audioFileService = {
 
   // Delete an audio file record
   async delete(id: string): Promise<void> {
+    if (!supabase) {
+      console.warn('⚠️ Supabase not available - skipping audio file record deletion');
+      return;
+    }
+
     const { error } = await supabase
       .from('audio_files')
       .delete()
@@ -275,6 +359,11 @@ export const audioFileService = {
 
 // Test connection function
 export const testSupabaseConnection = async (): Promise<boolean> => {
+  if (!supabase) {
+    console.warn('⚠️ Supabase not configured - connection test skipped');
+    return false;
+  }
+
   try {
     const { data, error } = await supabase
       .from('audio_files')
