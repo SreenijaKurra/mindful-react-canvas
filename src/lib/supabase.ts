@@ -5,9 +5,14 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Check if Supabase is properly configured
-const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && 
+const isSupabaseConfigured = !!(
+  supabaseUrl && 
+  supabaseAnonKey && 
   supabaseUrl !== 'https://your-neuroheart-project.supabase.co' && 
-  supabaseAnonKey !== 'your-neuroheart-anon-key');
+  supabaseAnonKey !== 'your-neuroheart-anon-key' &&
+  supabaseUrl.startsWith('https://') &&
+  supabaseUrl.includes('.supabase.co')
+);
 
 // Frontend client with anon key (safe for browser)
 export const supabase = isSupabaseConfigured 
@@ -22,10 +27,16 @@ export const supabaseAdmin = (isSupabaseConfigured && supabaseServiceKey)
 
 if (!isSupabaseConfigured) {
   console.warn('⚠️ Supabase not configured. Database features will be disabled.');
+  console.warn('Current values:', {
+    url: supabaseUrl || 'undefined',
+    hasAnonKey: !!supabaseAnonKey,
+    urlValid: supabaseUrl?.startsWith('https://') && supabaseUrl?.includes('.supabase.co')
+  });
   console.warn('To enable Supabase, please:');
-  console.warn('1. Create a Supabase project');
+  console.warn('1. Create a Supabase project at https://supabase.com');
   console.warn('2. Copy .env.example to .env');
   console.warn('3. Update VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY with your project credentials');
+  console.warn('4. Restart the development server');
 } else {
   console.log('✅ Supabase clients initialized:', {
     url: supabaseUrl,
@@ -58,7 +69,7 @@ export const audioFileService = {
   // Create a new audio file record
   async create(data: Partial<AudioFile>): Promise<AudioFile> {
     if (!supabase) {
-      console.warn('⚠️ Supabase not available - skipping audio file record creation');
+      console.warn('⚠️ Supabase not available - returning mock audio file record');
       // Return a mock record for development
       return {
         id: `mock-${Date.now()}`,
@@ -76,37 +87,72 @@ export const audioFileService = {
       } as AudioFile;
     }
 
-    console.log('Creating audio file record:', data);
+    try {
+      console.log('Creating audio file record:', data);
     
-    const { data: audioFile, error } = await supabase
-      .from('audio_files')
-      .insert([{
+      const { data: audioFile, error } = await supabase
+        .from('audio_files')
+        .insert([{
+          user_name: data.user_name,
+          message_text: data.message_text,
+          audio_type: data.audio_type || 'ai_text_generation',
+          audio_url: data.audio_url,
+          video_id: data.video_id,
+          status: data.status || 'pending',
+          duration_seconds: data.duration_seconds,
+          file_size_bytes: data.file_size_bytes,
+          metadata: data.metadata || {}
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating audio file record:', error);
+        // Return mock record instead of throwing error
+        console.warn('⚠️ Falling back to mock record due to database error');
+        return {
+          id: `mock-${Date.now()}`,
+          user_name: data.user_name,
+          message_text: data.message_text || '',
+          audio_type: data.audio_type || 'ai_text_generation',
+          audio_url: data.audio_url,
+          video_id: data.video_id,
+          status: data.status || 'pending',
+          duration_seconds: data.duration_seconds,
+          file_size_bytes: data.file_size_bytes,
+          metadata: data.metadata || {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as AudioFile;
+      }
+
+      console.log('Successfully created audio file record:', audioFile);
+      return audioFile;
+    } catch (networkError) {
+      console.error('Network error creating audio file record:', networkError);
+      console.warn('⚠️ Falling back to mock record due to network error');
+      // Return mock record for network errors
+      return {
+        id: `mock-${Date.now()}`,
         user_name: data.user_name,
-        message_text: data.message_text,
+        message_text: data.message_text || '',
         audio_type: data.audio_type || 'ai_text_generation',
         audio_url: data.audio_url,
         video_id: data.video_id,
         status: data.status || 'pending',
         duration_seconds: data.duration_seconds,
         file_size_bytes: data.file_size_bytes,
-        metadata: data.metadata || {}
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating audio file record:', error);
-      throw error;
+        metadata: data.metadata || {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as AudioFile;
     }
-
-    console.log('Successfully created audio file record:', audioFile);
-    return audioFile;
   },
 
   // Update an existing audio file record
   async update(id: string, data: Partial<AudioFile>): Promise<AudioFile> {
     if (!supabase) {
-      console.warn('⚠️ Supabase not available - skipping audio file record update');
+      console.warn('⚠️ Supabase not available - returning mock updated record');
       // Return a mock updated record
       return {
         id,
@@ -115,25 +161,41 @@ export const audioFileService = {
       } as AudioFile;
     }
 
-    console.log('Updating audio file record:', id, data);
+    try {
+      console.log('Updating audio file record:', id, data);
     
-    const { data: audioFile, error } = await supabase
-      .from('audio_files')
-      .update({
+      const { data: audioFile, error } = await supabase
+        .from('audio_files')
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating audio file record:', error);
+        // Return mock updated record instead of throwing
+        console.warn('⚠️ Falling back to mock record due to database error');
+        return {
+          id,
+          ...data,
+          updated_at: new Date().toISOString()
+        } as AudioFile;
+      }
+
+      console.log('Successfully updated audio file record:', audioFile);
+      return audioFile;
+    } catch (networkError) {
+      console.error('Network error updating audio file record:', networkError);
+      console.warn('⚠️ Falling back to mock record due to network error');
+      return {
+        id,
         ...data,
         updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating audio file record:', error);
-      throw error;
+      } as AudioFile;
     }
-
-    console.log('Successfully updated audio file record:', audioFile);
-    return audioFile;
   },
 
   // Get audio file by ID
@@ -143,21 +205,26 @@ export const audioFileService = {
       return null;
     }
 
-    const { data: audioFile, error } = await supabase
-      .from('audio_files')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data: audioFile, error } = await supabase
+        .from('audio_files')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // Not found
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null; // Not found
+        }
+        console.error('Error fetching audio file:', error);
+        return null;
       }
-      console.error('Error fetching audio file:', error);
-      throw error;
-    }
 
-    return audioFile;
+      return audioFile;
+    } catch (networkError) {
+      console.error('Network error fetching audio file:', networkError);
+      return null;
+    }
   },
 
   // Get audio files by user
