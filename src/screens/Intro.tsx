@@ -38,39 +38,17 @@ export const Intro: React.FC = () => {
           <h1 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'Source Code Pro, monospace' }}>Mindful Moments</h1>
 
           <div className="flex flex-col gap-2 items-center mt-4">
-            <Input
-              type="password"
-              value={token || ""}
-              onChange={(e) => {
-                const newToken = e.target.value;
-                setToken(newToken);
-                localStorage.setItem('tavus-token', newToken);
-              }}
-              placeholder="Enter Tavus API Key"
-              className="w-64 bg-[rgba(255,255,255,0.1)] text-white rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
-              style={{ 
-                color: 'white', 
-                fontFamily: 'Source Code Pro, monospace',
-              }}
-            />
-
-            <p className="text-sm text-white transition-all duration-200">
-              Don't have a key?{" "}
-              <a
-                href="https://platform.tavus.io/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-primary"
-              >
-                Create an account.
-              </a>
+            <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 mb-4">
+              <p className="text-green-300 text-sm text-center">
+                ✅ Demo Mode Active - API Key Configured
+              </p>
             </p>
           </div>
 
           <AudioButton 
             onClick={handleClick}
             className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-2 text-sm text-white transition-all duration-200 hover:text-primary mt-4 disabled:opacity-50"
-            disabled={!token}
+            disabled={false}
             style={{
               height: '44px',
               transition: 'all 0.2s ease-in-out',

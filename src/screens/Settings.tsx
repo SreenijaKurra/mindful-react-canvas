@@ -311,19 +311,14 @@ export const Settings: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="apiToken">API Token</Label>
-                <Input
-                  id="apiToken"
-                  type="password"
-                  value={token || ""}
-                  onChange={(e) => {
-                    const newToken = e.target.value;
-                    setToken(newToken);
-                    localStorage.setItem('tavus-token', newToken);
-                  }}
-                  placeholder="Enter Tavus API Key"
-                  className="bg-black/20 font-mono"
-                  style={{ fontFamily: "'Source Code Pro', monospace" }}
-                />
+                <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3">
+                  <p className="text-green-300 text-sm">
+                    ✅ Demo Mode: API Key is configured and secured
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    In production, API keys should be stored securely on the backend
+                  </p>
+                </div>
               </div>
             </div>
           </div>
