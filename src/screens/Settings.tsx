@@ -267,26 +267,26 @@ export const Settings: React.FC = () => {
                   id="greeting"
                   value={settings.greeting}
                   onChange={(e) => setSettings({ ...settings, greeting: e.target.value })}
-                  placeholder="Enter custom greeting"
+                  placeholder="e.g., Hello, I'm looking forward to our meditation session today"
                   className="bg-black/20 font-mono"
                   style={{ fontFamily: "'Source Code Pro', monospace" }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="context">Custom Context</Label>
+                <Label htmlFor="context">Meditation Goals & Context</Label>
                 <Textarea
                   id="context"
                   value={settings.context}
                   onChange={(e) => setSettings({ ...settings, context: e.target.value })}
-                  placeholder="Paste or type custom context"
+                  placeholder="e.g., I'm dealing with work stress and want to focus on breathing techniques. I'm a beginner to meditation."
                   className="min-h-[100px] bg-black/20 font-mono"
                   style={{ fontFamily: "'Source Code Pro', monospace" }}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="persona">Set Custom Persona ID</Label>
+                <Label htmlFor="persona">Meditation Guide Persona ID</Label>
                 <Input
                   id="persona"
                   value={settings.persona}
@@ -333,7 +333,7 @@ export const Settings: React.FC = () => {
               onClick={handleSave}
               className="hover:shadow-footer-btn relative flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.1)] px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:text-primary"
             >
-              Save Changes
+              Save Meditation Preferences
             </button>
           </div>
         </div>

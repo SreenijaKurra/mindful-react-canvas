@@ -1,6 +1,7 @@
 import { IConversation } from "@/types";
 import { settingsAtom } from "@/store/settings";
 import { getDefaultStore } from "jotai";
+import { sendWebhookData } from "./webhook";
 
 export const createConversation = async (
   token: string,
@@ -24,7 +25,7 @@ export const createConversation = async (
     persona_id: settings.persona || "pd43ffef",
     custom_greeting: settings.greeting !== undefined && settings.greeting !== null 
       ? settings.greeting 
-      : "Hey there! I'm your technical co-pilot! Let's get get started building with Tavus.",
+      : "Hello, and welcome to your personal meditation space. I'm here as your meditation guide and wellness coach. How are you feeling today, and what would you like to explore in your practice?",
     conversational_context: contextString
   };
   
@@ -44,5 +45,19 @@ export const createConversation = async (
   }
 
   const data = await response.json();
+  
+  // Send session start data to webhook
+  try {
+    await sendWebhookData({
+      event_type: "meditation_session_started",
+      conversation_id: data.conversation_id,
+      user_name: settings.name,
+      timestamp: new Date().toISOString(),
+      session_type: "guided_meditation"
+    });
+  } catch (error) {
+    console.error("Failed to send webhook data:", error);
+  }
+  
   return data;
 };

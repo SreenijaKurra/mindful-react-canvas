@@ -34,19 +34,21 @@ import { naughtyScoreAtom } from "@/store/game";
 import { apiTokenAtom } from "@/store/tokens";
 import { quantum } from 'ldrs';
 import { cn } from "@/lib/utils";
+import { sendWebhookData } from "@/api/webhook";
+import { useDailyEvent } from "@daily-co/daily-react";
 
 quantum.register();
 
 const timeToGoPhrases = [
-  "I'll need to dash off soon—let's make these last moments count.",
-  "I'll be heading out soon, but I've got a little more time for you!",
-  "I'll be leaving soon, but I'd love to hear one more thing before I go!",
+  "Our meditation session is coming to a close. Let's take a moment to reflect on what we've shared.",
+  "We have a few more minutes together. Is there anything else about your practice you'd like to explore?",
+  "Our time is almost up. How are you feeling right now, and what would you like to take with you from our session?",
 ];
 
 const outroPhrases = [
-  "It's time for me to go now. Take care, and I'll see you soon!",
-  "I've got to get back to work. See you next time!",
-  "I must say goodbye for now. Stay well, and I'll see you soon!",
+  "Thank you for sharing this meditation journey with me. Remember to be gentle with yourself, and I'll be here whenever you need guidance.",
+  "Our session is complete. Take these moments of peace with you, and remember that your practice is always available to you.",
+  "It's been wonderful guiding you today. May you carry this sense of calm and awareness with you. Until we meet again, be well.",
 ];
 
 export const Conversation: React.FC = () => {
@@ -55,6 +57,8 @@ export const Conversation: React.FC = () => {
   const [naughtyScore] = useAtom(naughtyScoreAtom);
   const [niceScore] = useAtom(niceScoreAtom);
   const token = useAtomValue(apiTokenAtom);
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+  const [conversationTranscript, setConversationTranscript] = useState<string[]>([]);
 
   const daily = useDaily();
   const localSessionId = useLocalSessionId();
@@ -65,9 +69,36 @@ export const Conversation: React.FC = () => {
   const remoteParticipantIds = useParticipantIds({ filter: "remote" });
   const [start, setStart] = useState(false);
 
+  // Listen for conversation events to capture transcripts and emotional state
+  useDailyEvent(
+    "app-message",
+    useCallback((ev: any) => {
+      if (ev.data?.event_type === "conversation.speech") {
+        const transcript = ev.data?.properties?.text;
+        if (transcript) {
+          setConversationTranscript(prev => [...prev, transcript]);
+        }
+      }
+      
+      // Capture emotional indicators or meditation-related events
+      if (ev.data?.event_type === "conversation.tool_call") {
+        const properties = ev.data?.properties;
+        if (properties) {
+          // Send real-time meditation data to webhook
+          sendWebhookData({
+            event_type: "meditation_interaction",
+            conversation_id: conversation?.conversation_id,
+            timestamp: new Date().toISOString(),
+            interaction_data: properties
+          }).catch(console.error);
+        }
+      }
+    }, [conversation?.conversation_id])
+  );
   useEffect(() => {
     if (remoteParticipantIds.length && !start) {
       setStart(true);
+      setSessionStartTime(Date.now());
       setTimeout(() => daily?.setLocalAudio(true), 4000);
     }
   }, [remoteParticipantIds, start]);
@@ -137,6 +168,20 @@ export const Conversation: React.FC = () => {
   }, [daily, isMicEnabled]);
 
   const leaveConversation = useCallback(() => {
+    const sessionDuration = sessionStartTime ? (Date.now() - sessionStartTime) / 1000 : 0;
+    
+    // Send session end data to webhook
+    if (conversation?.conversation_id) {
+      sendWebhookData({
+        event_type: "meditation_session_ended",
+        conversation_id: conversation.conversation_id,
+        timestamp: new Date().toISOString(),
+        session_duration: Math.round(sessionDuration),
+        conversation_summary: conversationTranscript.join(" "),
+        session_type: "guided_meditation"
+      }).catch(console.error);
+    }
+    
     daily?.leave();
     daily?.destroy();
     if (conversation?.conversation_id && token) {
