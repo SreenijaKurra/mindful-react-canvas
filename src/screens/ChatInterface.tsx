@@ -45,6 +45,9 @@ export const ChatInterface: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [currentVideoText, setCurrentVideoText] = useState<string>("");
 
+  // Add ref to track current audio element
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -159,8 +162,24 @@ export const ChatInterface: React.FC = () => {
   };
 
   const handlePlayAudio = async (text: string) => {
-    // Stop any currently playing audio
-    setCurrentSpeakingMessage(null);
+    // Stop any currently playing audio first
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
+    
+    // Stop Web Speech API if it's running
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+    
+    // If this message is already playing, just stop it
+    if (currentSpeakingMessage === text && isPlayingAudio) {
+      setIsPlayingAudio(false);
+      setCurrentSpeakingMessage(null);
+      return;
+    }
     
     try {
       setIsPlayingAudio(true);
@@ -172,17 +191,20 @@ export const ChatInterface: React.FC = () => {
       
       // Play the generated audio
       const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio; // Store reference to current audio
       audio.volume = 0.8;
       
       audio.onended = () => {
         setIsPlayingAudio(false);
         setCurrentSpeakingMessage(null);
+        currentAudioRef.current = null;
       };
       
       audio.onerror = () => {
         console.error('Error playing generated audio');
         setIsPlayingAudio(false);
         setCurrentSpeakingMessage(null);
+        currentAudioRef.current = null;
       };
       
       await audio.play();
@@ -192,6 +214,7 @@ export const ChatInterface: React.FC = () => {
       console.error("Error generating/playing ElevenLabs audio:", error);
       setIsPlayingAudio(false);
       setCurrentSpeakingMessage(null);
+      currentAudioRef.current = null;
       
       // Fallback to Web Speech API if ElevenLabs fails
       console.log('🔄 Falling back to Web Speech API');
@@ -200,6 +223,10 @@ export const ChatInterface: React.FC = () => {
   };
 
   const playWebSpeechAudio = async (text: string) => {
+    // Set the current speaking message for Web Speech API fallback
+    setIsPlayingAudio(true);
+    setCurrentSpeakingMessage(text);
+    
     // Original Web Speech API implementation as fallback
 
     // Create database record for TTS audio
@@ -252,6 +279,7 @@ export const ChatInterface: React.FC = () => {
         utterance.onend = () => {
           setIsPlayingAudio(false);
           setCurrentSpeakingMessage(null);
+          currentAudioRef.current = null;
           
           // Update database record with completion
           if (audioFileRecord && isSupabaseAvailable) {
@@ -272,6 +300,7 @@ export const ChatInterface: React.FC = () => {
         utterance.onerror = () => {
           setIsPlayingAudio(false);
           setCurrentSpeakingMessage(null);
+          currentAudioRef.current = null;
           
           // Update database record with error
           if (audioFileRecord && isSupabaseAvailable) {
@@ -324,12 +353,12 @@ export const ChatInterface: React.FC = () => {
   };
 
   const stopAudio = () => {
-    // Stop any HTML5 audio elements
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
+    // Stop current audio element
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
     
     // Stop Web Speech API
     if ('speechSynthesis' in window) {
@@ -517,14 +546,10 @@ export const ChatInterface: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          if (isPlayingAudio && currentSpeakingMessage === message.text) {
-                            stopAudio();
-                          } else {
-                            handlePlayAudio(message.text);
-                          }
+                          handlePlayAudio(message.text);
                         }}
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title={isPlayingAudio && currentSpeakingMessage === message.text ? "Stop Audio" : "Listen to Audio"}
+                        title={isPlayingAudio && currentSpeakingMessage === message.text ? "Stop Audio" : "Play Audio"}
                       >
                         {isPlayingAudio && currentSpeakingMessage === message.text ? (
                           <VolumeX className="size-3" />
