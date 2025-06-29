@@ -12,7 +12,12 @@ interface OpenAIResponse {
 }
 
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
-  const API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "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";
+  const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  
+  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-actual-openai-api-key-here') {
+    console.error('❌ OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env file');
+    throw new Error('OpenAI API key not configured. Please add a valid API key to your .env file.');
+  }
   
   // Create initial database record for AI text generation
   let audioFileRecord;
