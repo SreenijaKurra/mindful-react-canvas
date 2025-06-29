@@ -9,3 +9,4 @@ export { FinalScreen } from "./FinalScreen";
 export { ConversationError } from "./ConversationError";
 export { Settings } from "./Settings";
 export { MeditationOptions } from "./MeditationOptions";
+export { ChatInterface } from "./ChatInterface";

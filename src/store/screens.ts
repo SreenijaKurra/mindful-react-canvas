@@ -6,6 +6,7 @@ export type Screen =
   | "outOfMinutes"
   | "intro"
   | "meditationOptions"
+  | "chatInterface"
   | "instructions"
   | "settings"
   | "conversation"

@@ -12,6 +12,7 @@ import {
   FinalScreen,
   Settings,
   MeditationOptions,
+  ChatInterface,
 } from "./screens";
 
 function App() {
@@ -29,6 +30,8 @@ function App() {
         return <Intro />;
       case "meditationOptions":
         return <MeditationOptions />;
+      case "chatInterface":
+        return <ChatInterface />;
       case "settings":
         return <Settings />;
       case "instructions":

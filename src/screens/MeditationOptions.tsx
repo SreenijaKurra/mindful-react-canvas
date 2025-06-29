@@ -3,7 +3,7 @@ import React from "react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { Button } from "@/components/ui/button";
-import { Video, Headphones, BookOpen, Heart } from "lucide-react";
+import { Video, MessageCircle, Headphones, BookOpen } from "lucide-react";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 export const MeditationOptions: React.FC = () => {
@@ -13,9 +13,8 @@ export const MeditationOptions: React.FC = () => {
     setScreenState({ currentScreen: "instructions" });
   };
 
-  const handleAudioMeditation = () => {
-    // This would navigate to audio-only meditation
-    console.log("Audio meditation selected");
+  const handleChatBot = () => {
+    setScreenState({ currentScreen: "chatInterface" });
   };
 
   const handleGuidedReading = () => {
@@ -55,6 +54,31 @@ export const MeditationOptions: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+            {/* Chat Interface Option */}
+            <Button
+              onClick={handleChatBot}
+              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(10px)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 254, 0.4)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <MessageCircle className="size-12 text-primary mb-2" />
+              <h3 className="text-xl font-semibold">Chat with AI Guide</h3>
+              <p className="text-sm text-gray-300 text-center">
+                Text-based conversation with option to upgrade to video
+              </p>
+              <span className="text-xs text-primary font-medium">RECOMMENDED</span>
+            </Button>
+
             {/* Video Guide Option */}
             <Button
               onClick={handleVideoGuide}
@@ -72,17 +96,16 @@ export const MeditationOptions: React.FC = () => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Video className="size-12 text-primary mb-2" />
-              <h3 className="text-xl font-semibold">AI Video Guide</h3>
+              <Video className="size-12 text-green-400 mb-2" />
+              <h3 className="text-xl font-semibold">Direct Video Session</h3>
               <p className="text-sm text-gray-300 text-center">
-                Face-to-face meditation coaching with personalized guidance
+                Jump straight into face-to-face meditation coaching
               </p>
-              <span className="text-xs text-primary font-medium">RECOMMENDED</span>
             </Button>
 
-            {/* Audio Meditation Option */}
+            {/* Guided Reading Option */}
             <Button
-              onClick={handleAudioMeditation}
+              onClick={handleGuidedReading}
               className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
               style={{
                 backgroundColor: 'rgba(0,0,0,0.3)',
@@ -97,7 +120,7 @@ export const MeditationOptions: React.FC = () => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Headphones className="size-12 text-green-400 mb-2" />
+              <Headphones className="size-12 text-purple-400 mb-2" />
               <h3 className="text-xl font-semibold">Audio Meditation</h3>
               <p className="text-sm text-gray-300 text-center">
                 Voice-guided sessions with calming background sounds
@@ -121,34 +144,10 @@ export const MeditationOptions: React.FC = () => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <BookOpen className="size-12 text-purple-400 mb-2" />
+              <BookOpen className="size-12 text-red-400 mb-2" />
               <h3 className="text-xl font-semibold">Guided Reading</h3>
               <p className="text-sm text-gray-300 text-center">
                 Text-based meditation with mindfulness exercises
-              </p>
-            </Button>
-
-            {/* Breathing Exercise Option */}
-            <Button
-              onClick={handleBreathingExercise}
-              className="relative group flex flex-col items-center justify-center gap-4 p-8 h-auto rounded-2xl border border-[rgba(255,255,255,0.3)] text-white transition-all duration-300 hover:border-primary"
-              style={{
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 197, 254, 0.4)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <Heart className="size-12 text-red-400 mb-2" />
-              <h3 className="text-xl font-semibold">Breathing Exercise</h3>
-              <p className="text-sm text-gray-300 text-center">
-                Simple breathing patterns for quick stress relief
               </p>
             </Button>
           </div>
