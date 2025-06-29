@@ -166,6 +166,25 @@ export const ChatInterface: React.FC = () => {
       currentAudio.currentTime = 0;
     }
 
+    // Create database record for TTS audio
+    let audioFileRecord;
+    try {
+      audioFileRecord = await audioFileService.create({
+        user_name: settings.name,
+        message_text: text,
+        audio_type: 'tts',
+        status: 'pending',
+        metadata: {
+          tts_engine: 'web_speech_api',
+          request_timestamp: new Date().toISOString(),
+          text_length: text.length
+        }
+      });
+      console.log('✅ Created TTS audio file record:', audioFileRecord.id);
+    } catch (dbError) {
+      console.warn('⚠️ Failed to create TTS database record (non-critical):', dbError);
+    }
+
     try {
       setIsPlayingAudio(true);
       setCurrentSpeakingMessage(text);
@@ -193,11 +212,36 @@ export const ChatInterface: React.FC = () => {
         utterance.onend = () => {
           setIsPlayingAudio(false);
           setCurrentSpeakingMessage(null);
+          
+          // Update database record with completion
+          if (audioFileRecord) {
+            audioFileService.update(audioFileRecord.id, {
+              status: 'completed',
+              metadata: {
+                ...audioFileRecord.metadata,
+                completion_timestamp: new Date().toISOString(),
+                voice_used: femaleVoice?.name || 'default',
+                duration_estimated: Math.ceil(text.length / 10) // Rough estimate
+              }
+            }).catch(console.warn);
+          }
         };
 
         utterance.onerror = () => {
           setIsPlayingAudio(false);
           setCurrentSpeakingMessage(null);
+          
+          // Update database record with error
+          if (audioFileRecord) {
+            audioFileService.update(audioFileRecord.id, {
+              status: 'failed',
+              metadata: {
+                ...audioFileRecord.metadata,
+                error: 'TTS playback failed',
+                error_timestamp: new Date().toISOString()
+              }
+            }).catch(console.warn);
+          }
         };
 
         speechSynthesis.speak(utterance);
@@ -206,6 +250,18 @@ export const ChatInterface: React.FC = () => {
       console.error("Error playing audio:", error);
       setIsPlayingAudio(false);
       setCurrentSpeakingMessage(null);
+      
+      // Update database record with error
+      if (audioFileRecord) {
+        audioFileService.update(audioFileRecord.id, {
+          status: 'failed',
+          metadata: {
+            ...audioFileRecord.metadata,
+            error: error instanceof Error ? error.message : 'Unknown TTS error',
+            error_timestamp: new Date().toISOString()
+          }
+        }).catch(console.warn);
+      }
     }
   };
 

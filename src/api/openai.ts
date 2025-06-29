@@ -14,13 +14,13 @@ interface OpenAIResponse {
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
   const API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "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";
   
-  // Create initial database record for TTS generation
+  // Create initial database record for AI text generation
   let audioFileRecord;
   try {
     audioFileRecord = await audioFileService.create({
       user_name: userName,
       message_text: userMessage,
-      audio_type: 'tts',
+      audio_type: 'ai_text_generation',
       status: 'pending',
       metadata: {
         api_endpoint: "https://api.openai.com/v1/chat/completions",
@@ -28,9 +28,9 @@ export const generateAIResponse = async (userMessage: string, userName?: string)
         request_timestamp: new Date().toISOString()
       }
     });
-    console.log('✅ Created TTS audio file record:', audioFileRecord.id);
+    console.log('✅ Created AI text generation record:', audioFileRecord.id);
   } catch (dbError) {
-    console.warn('⚠️ Failed to create TTS database record (non-critical):', dbError);
+    console.warn('⚠️ Failed to create AI text generation database record (non-critical):', dbError);
   }
   
   const systemPrompt = `You are a compassionate AI meditation guide and wellness coach named Danny. Your role is to:
@@ -93,9 +93,9 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
             tokens_used: data.usage?.total_tokens || 0
           }
         });
-        console.log('✅ Updated TTS audio file record with completion');
+        console.log('✅ Updated AI text generation record with completion');
       } catch (dbError) {
-        console.warn('⚠️ Failed to update TTS database record (non-critical):', dbError);
+        console.warn('⚠️ Failed to update AI text generation database record (non-critical):', dbError);
       }
     }
     
@@ -116,7 +116,7 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
           }
         });
       } catch (dbError) {
-        console.warn('⚠️ Failed to update TTS database record with error (non-critical):', dbError);
+        console.warn('⚠️ Failed to update AI text generation database record with error (non-critical):', dbError);
       }
     }
     

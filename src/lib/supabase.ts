@@ -11,7 +11,7 @@ export interface AudioFile {
   id: string;
   user_name?: string;
   message_text: string;
-  audio_type: 'tts' | 'tavus_video';
+  audio_type: 'tts' | 'tavus_video' | 'ai_text_generation';
   audio_url?: string;
   video_id?: string;
   status: 'pending' | 'completed' | 'failed';
@@ -33,7 +33,7 @@ export const audioFileService = {
       .insert([{
         user_name: data.user_name,
         message_text: data.message_text,
-        audio_type: data.audio_type || 'tts',
+        audio_type: data.audio_type || 'ai_text_generation',
         audio_url: data.audio_url,
         video_id: data.video_id,
         status: data.status || 'pending',

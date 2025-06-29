@@ -68,6 +68,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
     switch (type) {
       case 'tavus_video': return '🎬';
       case 'tts': return '🔊';
+      case 'ai_text_generation': return '🤖';
       default: return '🎵';
     }
   };
@@ -153,7 +154,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{getTypeIcon(file.audio_type)}</span>
                   <span className="text-sm font-medium text-gray-300 capitalize">
-                    {file.audio_type.replace('_', ' ')}
+                    {file.audio_type.replace(/_/g, ' ')}
                   </span>
                   <span className={`text-xs px-2 py-1 rounded-full bg-gray-700 ${getStatusColor(file.status)}`}>
                     {file.status}
@@ -191,7 +192,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
               </div>
 
               <div className="flex items-center gap-2 ml-4">
-                {file.audio_url && file.status === 'completed' && (
+                {file.audio_url && file.status === 'completed' && file.audio_type !== 'ai_text_generation' && (
                   <>
                     <Button
                       variant="outline"
@@ -218,6 +219,12 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
                       <Download className="size-4" />
                     </Button>
                   </>
+                )}
+                
+                {file.audio_type === 'ai_text_generation' && file.status === 'completed' && (
+                  <div className="text-xs text-green-400 px-2 py-1 bg-green-900/20 rounded">
+                    ✓ Generated
+                  </div>
                 )}
               </div>
             </div>

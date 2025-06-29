@@ -326,7 +326,12 @@ export const Settings: React.FC = () => {
 
           {/* Audio Files Section */}
           <div className="space-y-4 border-t border-gray-700 pt-6">
-            <h3 className="text-lg font-semibold text-white">Your Audio Files</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Your Generated Content</h3>
+              <div className="text-xs text-gray-400">
+                🤖 AI Text • 🔊 TTS Audio • 🎬 Tavus Videos
+              </div>
+            </div>
             <div className="max-h-96 overflow-y-auto">
               <AudioFilesList userName={settings.name} limit={10} />
             </div>
