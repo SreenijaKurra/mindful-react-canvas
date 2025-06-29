@@ -48,7 +48,9 @@ export const generateTavusLipSyncVideo = async (
         api_endpoint: "https://tavusapi.com/v2/videos",
         request_timestamp: new Date().toISOString(),
         text_length: text.length,
-        truncated_text: text.substring(0, 500)
+        truncated_text: text.substring(0, 500),
+        original_text_length: text.length,
+        text_truncated: text.length > 500
       }
     });
     console.log('✅ Created Tavus video audio file record:', audioFileRecord.id);
@@ -105,7 +107,8 @@ export const generateTavusLipSyncVideo = async (
             ...audioFileRecord.metadata,
             video_id: data.video_id,
             api_response: data,
-            response_timestamp: new Date().toISOString()
+            response_timestamp: new Date().toISOString(),
+            generation_started: true
           }
         });
         console.log('✅ Updated audio file record with video ID:', data.video_id);
@@ -178,7 +181,8 @@ export const getTavusVideoStatus = async (
             metadata: {
               ...audioFile.metadata,
               completion_timestamp: new Date().toISOString(),
-              final_status_response: data
+              final_status_response: data,
+              video_generation_completed: true
             }
           });
           console.log('✅ Updated audio file record with completion data');
