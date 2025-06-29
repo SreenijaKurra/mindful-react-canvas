@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// These would normally be environment variables
-// For demo purposes, using placeholder values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Supabase configuration for neuroheart org
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-neuroheart-project.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-neuroheart-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

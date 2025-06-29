@@ -17,6 +17,9 @@ The fastest way to get started vibecoding with Tavus CVI. This React quickstart 
 - Vite
 - Tailwind CSS
 - Framer Motion
+- Supabase (Database)
+- Tavus API (Lip-sync videos)
+- OpenAI API (Text generation)
 <br></br>
 ## 🧑‍💻 Try it Live
 Spin up this template in under a minute with StackBlitz:
@@ -39,6 +42,17 @@ Spin up this template in under a minute with StackBlitz:
 3. **Customize your persona:**
    - Update the `persona_id` in `createConversation.ts` with your own
    - Learn how to [create your own persona](https://docs.tavus.io/sections/conversational-video-interface/creating-a-persona) on the [Tavus Platform](https://platform.tavus.io/)
+
+4. **Set up Supabase:**
+   - Create a Supabase project in the neuroheart org
+   - Run the migration: `supabase/migrations/create_audio_files_neuroheart.sql`
+   - Add your Supabase URL and anon key to `.env`
+
+5. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   # Add your actual API keys and Supabase credentials
+   ```
 
    ```typescript
    body: JSON.stringify({
