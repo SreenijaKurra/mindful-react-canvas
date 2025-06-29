@@ -376,11 +376,11 @@ export const ChatInterface: React.FC = () => {
     setCurrentVideoText(text); // Store the text being processed
     
     try {
-      console.log('🎬 Loading sample video...');
-      const sampleVideoUrl = await getSampleTavusVideo();
-      console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
+      console.log('🎬 Loading Supabase video...');
+      const supabaseVideoUrl = 'https://zeftfvudetoboalralss.supabase.co/storage/v1/object/public/audio-files/wb378fb5ffb3f.mp4';
+      console.log('✅ Using Supabase video URL:', supabaseVideoUrl);
       
-      // Create database record for the sample video playback
+      // Create database record for the Supabase video playback
       if (isSupabaseAvailable) {
         try {
           await audioFileService.create({
@@ -388,78 +388,48 @@ export const ChatInterface: React.FC = () => {
             message_text: text,
             audio_type: 'tavus_video',
             status: 'completed',
-            audio_url: sampleVideoUrl,
+            audio_url: supabaseVideoUrl,
             metadata: {
-              video_source: 'public_sample',
-              sample_video_url: sampleVideoUrl,
+              video_source: 'supabase_storage',
+              supabase_video_url: supabaseVideoUrl,
               request_timestamp: new Date().toISOString(),
               text_length: text.length,
               original_text: text,
-              playback_type: 'sample_demo'
+              playback_type: 'supabase_video'
             }
           });
-          console.log('✅ Created sample video playback record');
+          console.log('✅ Created Supabase video playback record');
         } catch (dbError) {
           console.warn('⚠️ Failed to create database record (non-critical):', dbError);
         }
       }
       
       // Set the video URL and open the player immediately
-      setTavusVideoUrl(sampleVideoUrl);
+      setTavusVideoUrl(supabaseVideoUrl);
       setIsTavusPlayerOpen(true);
       setIsGeneratingVideo(false);
-      console.log('🎬 Sample video popup should now be visible');
+      console.log('🎬 Supabase video popup should now be visible');
       
-      // Send analytics data for sample video playback
+      // Send analytics data for Supabase video playback
       try {
         await sendWebhookData({
-          event_type: "sample_video_played",
+          event_type: "supabase_video_played",
           user_name: settings.name,
           timestamp: new Date().toISOString(),
           message_text: text,
-          video_url: sampleVideoUrl,
-          session_type: "sample_video_demo"
+          video_url: supabaseVideoUrl,
+          session_type: "supabase_video_demo"
         });
       } catch (webhookError) {
         console.warn('⚠️ Failed to send webhook data (non-critical):', webhookError);
       }
       
     } catch (error) {
-      console.error("Error loading sample video:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to load sample video";
+      console.error("Error loading Supabase video:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load Supabase video";
       setVideoError(errorMessage);
       setIsGeneratingVideo(false);
     }
-  };
-
-  // Function to get fallback video URL when Supabase is not configured
-  const getSampleTavusVideo = async (): Promise<string> => {
-    // Use multiple fallback video URLs
-    const videoUrls = [
-      'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-      'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      'https://file-examples.com/storage/fe68c1f7d4c2d1b8e2c9c8f/2017/10/file_example_MP4_480_1_5MG.mp4'
-    ];
-    
-    // Try each URL until we find one that works
-    for (const url of videoUrls) {
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        if (response.ok) {
-          console.log('✅ Using working video URL:', url);
-          return url;
-        }
-      } catch (error) {
-        console.warn('❌ Video URL failed:', url, error);
-        continue;
-      }
-    }
-    
-    // If all URLs fail, return the first one as fallback
-    const sampleVideoUrl = videoUrls[0];
-    console.log('✅ Using specific sample video URL:', sampleVideoUrl);
-    return sampleVideoUrl;
   };
 
   return (
@@ -538,6 +508,7 @@ export const ChatInterface: React.FC = () => {
                         disabled={isGeneratingVideo}
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Play Sample Video"
+                        title="Play Supabase Video"
                       >
                         {isGeneratingVideo ? (
                           <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -576,7 +547,7 @@ export const ChatInterface: React.FC = () => {
                   <p className="text-red-200 text-sm">{videoError}</p>
                   {videoError.includes("storage bucket") && (
                     <p className="text-red-300 text-xs mt-1 opacity-80">
-                      💡 Tip: Make sure you have uploaded a sample video file to the Supabase storage bucket.
+                      💡 Tip: Check that the video file exists at the Supabase storage URL.
                     </p>
                   )}
                 </div>
