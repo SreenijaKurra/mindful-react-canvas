@@ -23,15 +23,9 @@ export const generateTavusLipSyncVideo = async (
   console.log('Text to synthesize:', text);
   
   const payload = {
-    persona_id: settings.persona || "p5bf051443c7",
+    replica_id: settings.replica || "rfb51183fe",
     script: text,
-    background_url: null, // Use default background
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.75,
-      style: 0.0,
-      use_speaker_boost: true
-    }
+    background_url: "" // Use default background
   };
   
   console.log('Sending payload to Tavus API:', payload);
