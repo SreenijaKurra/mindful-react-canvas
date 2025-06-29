@@ -394,17 +394,16 @@ export const ChatInterface: React.FC = () => {
       
       const pollVideoStatus = async (): Promise<void> => {
         try {
-          const statusResponse = await getTavusVideoStatus(token, videoResponse.video_id);
+          const statusResponse = await getTavusLipSyncStatus(token, videoResponse.lipsync_id);
           console.log('📊 Video status:', statusResponse);
           
-          if (statusResponse.status === 'completed' && statusResponse.video_url) {
-            setTavusVideoUrl(statusResponse.video_url);
-            console.log('✅ Setting video URL and opening player:', statusResponse.video_url);
+          if (statusResponse.status === 'completed' && statusResponse.lipsync_url) {
+            setTavusVideoUrl(statusResponse.lipsync_url);
+            console.log('✅ Setting video URL and opening player:', statusResponse.lipsync_url);
             
             // Small delay to ensure state is set before opening
             setTimeout(() => {
-              setIsTavusPlayerOpen(true);
-              console.log('🎬 Tavus player opened with URL:', statusResponse.video_url);
+              console.log('🎬 Tavus player opened with URL:', statusResponse.lipsync_url);
             }, 100);
             
             setIsTavusPlayerOpen(true);
@@ -416,24 +415,24 @@ export const ChatInterface: React.FC = () => {
               user_name: settings.name,
               timestamp: new Date().toISOString(),
               message_text: text,
-              video_id: videoResponse.video_id,
-              video_url: statusResponse.video_url,
+              lipsync_id: videoResponse.lipsync_id,
+              lipsync_url: statusResponse.lipsync_url,
               session_type: "chat_lip_sync_response"
             });
             
             // Log successful completion to console for demo
-            console.log('💾 Audio file successfully stored in Supabase with video URL:', statusResponse.video_url);
+            console.log('💾 Lip sync video successfully stored in Supabase with video URL:', statusResponse.lipsync_url);
             
           } else if (statusResponse.status === 'failed') {
             // Update database with failed status
             try {
-              const audioFile = await audioFileService.getByVideoId(videoResponse.video_id);
+              const audioFile = await audioFileService.getByVideoId(videoResponse.lipsync_id);
               if (audioFile) {
                 await audioFileService.update(audioFile.id, {
                   status: 'failed',
                   metadata: {
                     ...audioFile.metadata,
-                    failure_reason: 'Video generation failed',
+                    failure_reason: 'Lip sync generation failed',
                     failure_timestamp: new Date().toISOString()
                   }
                 });
@@ -441,20 +440,20 @@ export const ChatInterface: React.FC = () => {
             } catch (dbError) {
               console.warn('Failed to update database with failure status:', dbError);
             }
-            throw new Error('Video generation failed');
+            throw new Error('Lip sync generation failed');
           } else if (attempts < maxAttempts) {
             attempts++;
             setTimeout(pollVideoStatus, 5000); // Check every 5 seconds
           } else {
-            throw new Error('Video generation timed out');
+            throw new Error('Lip sync generation timed out');
           }
         } catch (error) {
-          console.error('Error checking video status:', error);
+          console.error('Error checking lip sync status:', error);
           // Check if it's a network connectivity issue
           if (error instanceof Error && error.message === 'Failed to fetch') {
-            setVideoError('Unable to connect to the Tavus video service. Please check your internet connection and try again.');
+            setVideoError('Unable to connect to the Tavus lip sync service. Please check your internet connection and try again.');
           } else {
-            setVideoError('Failed to generate video. Please try again.');
+            setVideoError('Failed to generate lip sync video. Please try again.');
           }
           setIsGeneratingVideo(false);
         }
@@ -469,7 +468,7 @@ export const ChatInterface: React.FC = () => {
         user_name: settings.name,
         timestamp: new Date().toISOString(),
         message_text: text,
-        video_id: videoResponse.video_id,
+        lipsync_id: videoResponse.lipsync_id,
         session_type: "chat_lip_sync_response"
       });
       
@@ -479,8 +478,8 @@ export const ChatInterface: React.FC = () => {
       setVideoError(errorMessage);
       setIsGeneratingVideo(false);
       
-      // If it's a concurrent videos error, provide additional guidance
-      if (errorMessage.includes("maximum number of active video")) {
+      // If it's a concurrent lip sync error, provide additional guidance
+      if (errorMessage.includes("maximum number of active lip sync")) {
         // Auto-clear the error after 10 seconds to reduce UI clutter
         setTimeout(() => {
           setVideoError(null);

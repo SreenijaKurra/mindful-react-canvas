@@ -1,10 +1,11 @@
 import { settingsAtom } from "@/store/settings";
 import { getDefaultStore } from "jotai";
 import { audioFileService } from "@/lib/supabase";
+import { generateElevenLabsAudio } from "./elevenLabsTTS";
 
-interface TavusVideoResponse {
-  video_id: string;
-  video_url?: string;
+interface TavusLipSyncResponse {
+  lipsync_id: string;
+  lipsync_url?: string;
   status: string;
   download_url?: string;
   duration_seconds?: number;
@@ -15,7 +16,7 @@ export const generateTavusLipSyncVideo = async (
   token: string,
   text: string,
   userName?: string
-): Promise<TavusVideoResponse> => {
+): Promise<TavusLipSyncResponse> => {
   // Validate token before making API call
   if (!token || token.trim() === '') {
     throw new Error("API token is required. Please enter a valid Tavus API key in settings.");
@@ -24,16 +25,7 @@ export const generateTavusLipSyncVideo = async (
   // Get settings from Jotai store
   const settings = getDefaultStore().get(settingsAtom);
   
-  console.log('🎬 Creating Tavus lip sync video with replica:', settings.replica);
-  console.log('📝 Text to synthesize:', text);
-  
-  // Use the correct Tavus API v2 format for video generation
-  const payload = {
-    replica_id: settings.replica || "rfb51183fe", // Danny's replica ID
-    script: text.substring(0, 500) // Limit text length to avoid API limits
-  };
-  
-  console.log('📤 Sending payload to Tavus API:', payload);
+  console.log('🎬 Creating Tavus lip sync video with text:', text);
   
   // Create initial database record
   let audioFileRecord;
@@ -44,23 +36,53 @@ export const generateTavusLipSyncVideo = async (
       audio_type: 'tavus_video',
       status: 'pending',
       metadata: {
-        replica_id: settings.replica || "rfb51183fe",
-        api_endpoint: "https://tavusapi.com/v2/videos",
+        api_endpoint: "https://tavusapi.com/v2/lipsync",
         request_timestamp: new Date().toISOString(),
         text_length: text.length,
-        truncated_text: text.substring(0, 500),
-        original_text_length: text.length,
-        text_truncated: text.length > 500
+        original_text: text,
+        step: 'generating_audio'
       }
     });
-    console.log('✅ Created Tavus video audio file record:', audioFileRecord.id);
+    console.log('✅ Created Tavus lip sync record:', audioFileRecord.id);
   } catch (dbError) {
     console.warn('⚠️ Failed to create database record (non-critical):', dbError);
-    // Continue with API call even if database fails
   }
   
   try {
-    const response = await fetch("https://tavusapi.com/v2/videos", {
+    // Step 1: Generate audio using ElevenLabs
+    console.log('🎵 Step 1: Generating audio with ElevenLabs...');
+    const sourceAudioUrl = await generateElevenLabsAudio(text, userName);
+    console.log('✅ Audio generated:', sourceAudioUrl);
+    
+    // Update database record with audio URL
+    if (audioFileRecord) {
+      try {
+        await audioFileService.update(audioFileRecord.id, {
+          audio_url: sourceAudioUrl,
+          metadata: {
+            ...audioFileRecord.metadata,
+            source_audio_url: sourceAudioUrl,
+            audio_generation_completed: new Date().toISOString(),
+            step: 'creating_lipsync'
+          }
+        });
+      } catch (dbError) {
+        console.warn('⚠️ Failed to update database record (non-critical):', dbError);
+      }
+    }
+    
+    // Step 2: Create lip sync video using Tavus v2/lipsync API
+    console.log('🎬 Step 2: Creating lip sync video...');
+    
+    const payload = {
+      original_video_url: "https://cdn.replica.tavus.io/20283/9de1f64e.mp4", // Default video from your example
+      source_audio_url: sourceAudioUrl,
+      lipsync_name: `Mindful Moments - ${new Date().toISOString()}`
+    };
+    
+    console.log('📤 Sending payload to Tavus lip sync API:', payload);
+    
+    const response = await fetch("https://tavusapi.com/v2/lipsync", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -71,7 +93,7 @@ export const generateTavusLipSyncVideo = async (
 
     if (!response?.ok) {
       const errorText = await response.text();
-      console.error("❌ Tavus API Error Response:", errorText);
+      console.error("❌ Tavus Lip Sync API Error Response:", errorText);
       
       if (response.status === 401) {
         throw new Error("Invalid API token. Please check your Tavus API key in settings and ensure it's correct.");
@@ -81,10 +103,7 @@ export const generateTavusLipSyncVideo = async (
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.message?.includes("concurrent") || errorData.message?.includes("maximum")) {
-            throw new Error("You have reached the maximum number of active video generations. Please wait for current videos to complete or try again in a few minutes.");
-          }
-          if (errorData.error?.includes("replica_id")) {
-            throw new Error("Invalid replica ID. Please check your replica settings.");
+            throw new Error("You have reached the maximum number of active lip sync generations. Please wait for current videos to complete or try again in a few minutes.");
           }
         } catch (parseError) {
           // If we can't parse the error, fall through to generic error
@@ -96,28 +115,36 @@ export const generateTavusLipSyncVideo = async (
     }
 
     const data = await response.json();
-    console.log("✅ Tavus Video API Response:", data);
+    console.log("✅ Tavus Lip Sync API Response:", data);
     
-    // Update database record with video ID
-    if (audioFileRecord && data.video_id) {
+    // Update database record with lip sync ID
+    if (audioFileRecord && data.lipsync_id) {
       try {
         await audioFileService.update(audioFileRecord.id, {
-          video_id: data.video_id,
+          video_id: data.lipsync_id,
           metadata: {
             ...audioFileRecord.metadata,
-            video_id: data.video_id,
+            lipsync_id: data.lipsync_id,
             api_response: data,
             response_timestamp: new Date().toISOString(),
-            generation_started: true
+            lipsync_generation_started: true,
+            step: 'processing_lipsync'
           }
         });
-        console.log('✅ Updated audio file record with video ID:', data.video_id);
+        console.log('✅ Updated record with lip sync ID:', data.lipsync_id);
       } catch (dbError) {
         console.warn('⚠️ Failed to update database record (non-critical):', dbError);
       }
     }
     
-    return data;
+    return {
+      lipsync_id: data.lipsync_id,
+      status: data.status || 'processing',
+      lipsync_url: data.lipsync_url,
+      download_url: data.download_url,
+      duration_seconds: data.duration_seconds,
+      file_size_bytes: data.file_size_bytes
+    };
   } catch (error) {
     console.error("❌ Error in generateTavusLipSyncVideo:", error);
     
@@ -129,7 +156,8 @@ export const generateTavusLipSyncVideo = async (
           metadata: {
             ...audioFileRecord.metadata,
             error: error instanceof Error ? error.message : 'Unknown error',
-            error_timestamp: new Date().toISOString()
+            error_timestamp: new Date().toISOString(),
+            step: 'failed'
           }
         });
       } catch (dbError) {
@@ -139,20 +167,20 @@ export const generateTavusLipSyncVideo = async (
     
     // Provide more specific error messages for common network issues
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error("Unable to connect to the Tavus video service. Please check your internet connection and try again.");
+      throw new Error("Unable to connect to the Tavus lip sync service. Please check your internet connection and try again.");
     }
     
     throw error;
   }
 };
 
-export const getTavusVideoStatus = async (
+export const getTavusLipSyncStatus = async (
   token: string,
-  videoId: string,
+  lipsyncId: string,
   updateDatabase: boolean = true
-): Promise<TavusVideoResponse> => {
+): Promise<TavusLipSyncResponse> => {
   try {
-    const response = await fetch(`https://tavusapi.com/v2/videos/${videoId}`, {
+    const response = await fetch(`https://tavusapi.com/v2/lipsync/${lipsyncId}`, {
       method: "GET",
       headers: {
         "x-api-key": token.trim(),
@@ -161,40 +189,53 @@ export const getTavusVideoStatus = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ Error getting video status:", errorText);
-      throw new Error(`Failed to get video status: ${response.status} - ${errorText}`);
+      console.error("❌ Error getting lip sync status:", errorText);
+      throw new Error(`Failed to get lip sync status: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("📊 Video status response:", data);
+    console.log("📊 Lip sync status response:", data);
     
-    // Update database record if video is completed
-    if (updateDatabase && data.status === 'completed' && data.video_url) {
+    // Update database record if lip sync is completed
+    if (updateDatabase && data.status === 'completed' && data.lipsync_url) {
       try {
-        const audioFile = await audioFileService.getByVideoId(videoId);
+        const audioFile = await audioFileService.getByVideoId(lipsyncId);
         if (audioFile) {
           await audioFileService.update(audioFile.id, {
             status: 'completed',
-            audio_url: data.video_url,
+            audio_url: data.lipsync_url, // Store the final video URL
             duration_seconds: data.duration_seconds,
             file_size_bytes: data.file_size_bytes,
             metadata: {
               ...audioFile.metadata,
               completion_timestamp: new Date().toISOString(),
               final_status_response: data,
-              video_generation_completed: true
+              lipsync_generation_completed: true,
+              final_video_url: data.lipsync_url,
+              download_url: data.download_url,
+              step: 'completed'
             }
           });
-          console.log('✅ Updated audio file record with completion data');
+          console.log('✅ Updated record with completion data');
         }
       } catch (dbError) {
         console.warn('⚠️ Failed to update database record with completion data (non-critical):', dbError);
       }
     }
     
-    return data;
+    return {
+      lipsync_id: data.lipsync_id,
+      status: data.status,
+      lipsync_url: data.lipsync_url,
+      download_url: data.download_url,
+      duration_seconds: data.duration_seconds,
+      file_size_bytes: data.file_size_bytes
+    };
   } catch (error) {
-    console.error("❌ Error getting video status:", error);
+    console.error("❌ Error getting lip sync status:", error);
     throw error;
   }
 };
+
+// Legacy function name for backward compatibility
+export const getTavusVideoStatus = getTavusLipSyncStatus;
