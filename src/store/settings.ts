@@ -21,7 +21,7 @@ const getInitialSettings = (): Settings => {
     interruptSensitivity: "medium",
     greeting: "",
     context: "",
-    persona: "",
+    persona: "r6ae5b6efc9d",
     replica: "",
   };
 };
