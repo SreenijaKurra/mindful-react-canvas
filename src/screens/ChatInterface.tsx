@@ -250,7 +250,16 @@ export const ChatInterface: React.FC = () => {
       
     } catch (error) {
       console.error("Error generating video response:", error);
-      setVideoError(error instanceof Error ? error.message : "Failed to generate video response");
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate video response";
+      setVideoError(errorMessage);
+      
+      // If it's a concurrent conversations error, provide additional guidance
+      if (errorMessage.includes("maximum number of active video sessions")) {
+        // Auto-clear the error after 10 seconds to reduce UI clutter
+        setTimeout(() => {
+          setVideoError(null);
+        }, 10000);
+      }
     } finally {
       setIsGeneratingVideo(false);
     }
@@ -364,7 +373,14 @@ export const ChatInterface: React.FC = () => {
           {videoError && (
             <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <p className="text-red-200 text-sm">{videoError}</p>
+                <div className="flex-1 pr-2">
+                  <p className="text-red-200 text-sm">{videoError}</p>
+                  {videoError.includes("maximum number of active video sessions") && (
+                    <p className="text-red-300 text-xs mt-1 opacity-80">
+                      💡 Tip: Try the regular video session option instead, or wait a few minutes before trying again.
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"

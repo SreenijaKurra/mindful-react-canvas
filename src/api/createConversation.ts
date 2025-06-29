@@ -60,6 +60,8 @@ export const createConversation = async (
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.message === "User has reached maximum concurrent conversations") {
+            // This is an API-driven limitation from Tavus platform
+            // The user needs to end existing sessions or wait for them to expire
             throw new Error("You have reached the maximum number of active video sessions. Please end your current session before starting a new one, or try again in a few minutes.");
           }
         } catch (parseError) {
