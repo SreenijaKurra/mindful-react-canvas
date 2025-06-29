@@ -3,11 +3,20 @@ import React from "react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { Button } from "@/components/ui/button";
-import { Video, MessageCircle, Headphones, BookOpen } from "lucide-react";
+import { Video, MessageCircle, Headphones, BookOpen, Play } from "lucide-react";
+import { VideoPopup } from "@/components/VideoPopup";
+import { useVideoPopup } from "@/hooks/useVideoPopup";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 export const MeditationOptions: React.FC = () => {
   const [, setScreenState] = useAtom(screenAtom);
+  const { 
+    isVideoPopupOpen, 
+    isVideoPlaying, 
+    openVideoPopup, 
+    closeVideoPopup, 
+    toggleVideoPlay 
+  } = useVideoPopup();
 
   const handleVideoGuide = () => {
     setScreenState({ currentScreen: "instructions" });
@@ -74,7 +83,7 @@ export const MeditationOptions: React.FC = () => {
               <MessageCircle className="size-12 text-primary mb-2" />
               <h3 className="text-xl font-semibold">Chat with AI Guide</h3>
               <p className="text-sm text-gray-300 text-center">
-                Text-based conversation with option to upgrade to video
+                Text-based conversation with avatar popup option
               </p>
               <span className="text-xs text-primary font-medium">RECOMMENDED</span>
             </Button>
@@ -152,6 +161,18 @@ export const MeditationOptions: React.FC = () => {
             </Button>
           </div>
 
+          {/* Quick Avatar Preview */}
+          <div className="mt-6 text-center">
+            <Button
+              onClick={openVideoPopup}
+              variant="outline"
+              className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-white"
+            >
+              <Play className="size-4 mr-2" />
+              Preview Your AI Guide
+            </Button>
+          </div>
+
           <div className="mt-8 text-center">
             <button
               onClick={() => setScreenState({ currentScreen: "intro" })}
@@ -162,6 +183,17 @@ export const MeditationOptions: React.FC = () => {
           </div>
         </div>
       </AnimatedTextBlockWrapper>
+      
+      {/* Video Popup */}
+      <VideoPopup
+        isOpen={isVideoPopupOpen}
+        onClose={closeVideoPopup}
+        avatarVideoSrc={gloriaVideo}
+        isPlaying={isVideoPlaying}
+        onTogglePlay={toggleVideoPlay}
+        title="AI Meditation Guide Preview"
+        subtitle="Meet your mindfulness companion"
+      />
     </DialogWrapper>
   );
 };

@@ -7,6 +7,8 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
+import { VideoPopup } from "@/components/VideoPopup";
+import { useVideoPopup } from "@/hooks/useVideoPopup";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
@@ -32,6 +34,13 @@ export const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const { 
+    isVideoPopupOpen, 
+    isVideoPlaying, 
+    openVideoPopup, 
+    closeVideoPopup, 
+    toggleVideoPlay 
+  } = useVideoPopup();
 
   // Initialize speech recognition
   useEffect(() => {
@@ -103,6 +112,12 @@ export const ChatInterface: React.FC = () => {
 
     if (lowerMessage.includes('video') || lowerMessage.includes('face to face') || lowerMessage.includes('see you')) {
       return "I'd love to meet you face-to-face! Video sessions allow me to provide more personalized guidance, read your energy, and create a deeper connection. Click the video button below to start our live session.";
+    }
+
+    if (lowerMessage.includes('avatar') || lowerMessage.includes('show yourself') || lowerMessage.includes('see avatar')) {
+      // Auto-open video popup when user asks to see avatar
+      setTimeout(() => openVideoPopup(), 1000);
+      return "Here I am! I've opened a video popup so you can see me while we chat. You can move it around, expand it, or close it anytime. How can I help you with your meditation practice today?";
     }
     
     return "Thank you for sharing that with me. I'm here to support your wellness journey. For more personalized guidance and a deeper connection, would you like to switch to a video session where we can work together more closely?";
@@ -196,13 +211,26 @@ export const ChatInterface: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
+              onClick={openVideoPopup}
+              className="relative group"
+              title="Show avatar popup"
+            >
+              <Video className="size-5" />
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Show Avatar
+              </span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="icon"
               onClick={handleVideoSession}
               className="relative group"
               title="Start video session"
             >
               <Video className="size-5" />
               <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Video Chat
+                Full Video
               </span>
             </Button>
             
@@ -290,6 +318,15 @@ export const ChatInterface: React.FC = () => {
           
           <div className="mt-3 text-center">
             <Button
+              onClick={openVideoPopup}
+              variant="outline"
+              className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-white mr-3"
+            >
+              <Video className="size-4 mr-2" />
+              Show Avatar Popup
+            </Button>
+            
+            <Button
               onClick={handleVideoSession}
               variant="outline"
               className="text-primary border-primary hover:bg-primary hover:text-white"
@@ -300,6 +337,17 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Video Popup */}
+      <VideoPopup
+        isOpen={isVideoPopupOpen}
+        onClose={closeVideoPopup}
+        avatarVideoSrc={gloriaVideo}
+        isPlaying={isVideoPlaying}
+        onTogglePlay={toggleVideoPlay}
+        title="AI Meditation Guide"
+        subtitle="Your mindfulness companion"
+      />
     </DialogWrapper>
   );
 };
