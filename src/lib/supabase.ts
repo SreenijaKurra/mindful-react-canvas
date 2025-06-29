@@ -8,8 +8,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const isSupabaseConfigured = !!(
   supabaseUrl && 
   supabaseAnonKey && 
-  supabaseUrl !== 'https://zeftfvudetoboalralss.supabase.co' && 
-  supabaseAnonKey !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZnRmdnVkZXRvYm9hbHJhbHNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyOTUxMDUsImV4cCI6MjA2NDg3MTEwNX0.807TnF-AclmwAgAyeemrgP46s9g8qG6XrYnWAlb1dsw' &&
+  supabaseUrl !== 'https://your-project-ref.supabase.co' && 
+  supabaseAnonKey !== 'your-anon-key-here' &&
   supabaseUrl.startsWith('https://') &&
   supabaseUrl.includes('.supabase.co')
 );

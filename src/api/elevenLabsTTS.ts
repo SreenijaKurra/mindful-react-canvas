@@ -91,24 +91,37 @@ export const generateElevenLabsAudio = async (
     const fileName = `elevenlabs-${audioFileRecord?.id || Date.now()}.mp3`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('audio-files')
-      .upload(fileName, audioBlob, {
-        contentType: 'audio/mpeg',
-        upsert: false
-      });
-
-    if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      throw new Error(`Storage upload error: ${uploadError.message}`);
+    let uploadData, uploadError;
+    let audioUrl;
+    
+    if (supabase) {
+      const uploadResult = await supabase.storage
+        .from('audio-files')
+        .upload(fileName, audioBlob, {
+          contentType: 'audio/mpeg',
+          upsert: false
+        });
+      
+      uploadData = uploadResult.data;
+      uploadError = uploadResult.error;
+      
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Storage upload error: ${uploadError.message}`);
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('audio-files')
+        .getPublicUrl(fileName);
+      
+      audioUrl = urlData.publicUrl;
+    } else {
+      console.warn('⚠️ Supabase not available - creating blob URL for audio');
+      // Create a blob URL as fallback when Supabase is not available
+      audioUrl = URL.createObjectURL(audioBlob);
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('audio-files')
-      .getPublicUrl(fileName);
-
-    const audioUrl = urlData.publicUrl;
 
     // Update database record with completion data
     if (audioFileRecord) {
