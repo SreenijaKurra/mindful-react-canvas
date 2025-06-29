@@ -147,7 +147,7 @@ export const testAdminConnection = async (): Promise<boolean> => {
   try {
     console.log('🔐 Testing admin connection...');
     
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('audio_files')
       .select('count(*)')
       .limit(1);

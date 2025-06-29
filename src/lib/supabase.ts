@@ -432,7 +432,7 @@ export const testSupabaseConnection = async (): Promise<boolean> => {
   }
 
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('audio_files')
       .select('count(*)')
       .limit(1);

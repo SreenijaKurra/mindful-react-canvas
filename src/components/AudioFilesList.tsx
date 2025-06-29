@@ -211,7 +211,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
           <div className="mt-4 flex flex-wrap gap-2">
             {Object.entries(stats.byType).map(([type, count]) => (
               <div key={type} className="bg-gray-700/50 px-3 py-1 rounded-full text-xs">
-                {getTypeIcon(type as AudioFile['audio_type'])} {type.replace(/_/g, ' ')}: {count}
+                {getTypeIcon(type as AudioFile['audio_type'])} {type.replace(/_/g, ' ')}: {count as number}
               </div>
             ))}
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { DialogWrapper } from "@/components/DialogWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Video, Settings, Mic, MicOff, Volume2, VolumeX, Play } from "lucide-react";
+import { Send, Video, Settings, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
