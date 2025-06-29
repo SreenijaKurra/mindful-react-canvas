@@ -28,9 +28,9 @@ export const generateAIResponse = async (userMessage: string, userName?: string)
         request_timestamp: new Date().toISOString()
       }
     });
-    console.log('Created TTS audio file record:', audioFileRecord.id);
+    console.log('✅ Created TTS audio file record:', audioFileRecord.id);
   } catch (dbError) {
-    console.warn('Failed to create TTS database record (non-critical):', dbError);
+    console.warn('⚠️ Failed to create TTS database record (non-critical):', dbError);
   }
   
   const systemPrompt = `You are a compassionate AI meditation guide and wellness coach named Danny. Your role is to:
@@ -93,16 +93,16 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
             tokens_used: data.usage?.total_tokens || 0
           }
         });
-        console.log('Updated TTS audio file record with completion');
+        console.log('✅ Updated TTS audio file record with completion');
       } catch (dbError) {
-        console.warn('Failed to update TTS database record (non-critical):', dbError);
+        console.warn('⚠️ Failed to update TTS database record (non-critical):', dbError);
       }
     }
     
     return responseText;
     
   } catch (error) {
-    console.error('Error calling OpenAI API:', error);
+    console.error('❌ Error calling OpenAI API:', error);
     
     // Update database record with error
     if (audioFileRecord) {
@@ -116,7 +116,7 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
           }
         });
       } catch (dbError) {
-        console.warn('Failed to update TTS database record with error (non-critical):', dbError);
+        console.warn('⚠️ Failed to update TTS database record with error (non-critical):', dbError);
       }
     }
     

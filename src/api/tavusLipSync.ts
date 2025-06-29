@@ -24,8 +24,8 @@ export const generateTavusLipSyncVideo = async (
   // Get settings from Jotai store
   const settings = getDefaultStore().get(settingsAtom);
   
-  console.log('Creating Tavus lip sync video with replica:', settings.replica);
-  console.log('Text to synthesize:', text);
+  console.log('🎬 Creating Tavus lip sync video with replica:', settings.replica);
+  console.log('📝 Text to synthesize:', text);
   
   // Use the correct Tavus API v2 format for video generation
   const payload = {
@@ -33,7 +33,7 @@ export const generateTavusLipSyncVideo = async (
     script: text.substring(0, 500) // Limit text length to avoid API limits
   };
   
-  console.log('Sending payload to Tavus API:', payload);
+  console.log('📤 Sending payload to Tavus API:', payload);
   
   // Create initial database record
   let audioFileRecord;
@@ -51,9 +51,9 @@ export const generateTavusLipSyncVideo = async (
         truncated_text: text.substring(0, 500)
       }
     });
-    console.log('Created audio file record:', audioFileRecord.id);
+    console.log('✅ Created Tavus video audio file record:', audioFileRecord.id);
   } catch (dbError) {
-    console.warn('Failed to create database record (non-critical):', dbError);
+    console.warn('⚠️ Failed to create database record (non-critical):', dbError);
     // Continue with API call even if database fails
   }
   
@@ -69,7 +69,7 @@ export const generateTavusLipSyncVideo = async (
 
     if (!response?.ok) {
       const errorText = await response.text();
-      console.error("Tavus API Error Response:", errorText);
+      console.error("❌ Tavus API Error Response:", errorText);
       
       if (response.status === 401) {
         throw new Error("Invalid API token. Please check your Tavus API key in settings and ensure it's correct.");
@@ -94,7 +94,7 @@ export const generateTavusLipSyncVideo = async (
     }
 
     const data = await response.json();
-    console.log("Tavus Video API Response:", data);
+    console.log("✅ Tavus Video API Response:", data);
     
     // Update database record with video ID
     if (audioFileRecord && data.video_id) {
@@ -108,15 +108,15 @@ export const generateTavusLipSyncVideo = async (
             response_timestamp: new Date().toISOString()
           }
         });
-        console.log('Updated audio file record with video ID:', data.video_id);
+        console.log('✅ Updated audio file record with video ID:', data.video_id);
       } catch (dbError) {
-        console.warn('Failed to update database record (non-critical):', dbError);
+        console.warn('⚠️ Failed to update database record (non-critical):', dbError);
       }
     }
     
     return data;
   } catch (error) {
-    console.error("Error in generateTavusLipSyncVideo:", error);
+    console.error("❌ Error in generateTavusLipSyncVideo:", error);
     
     // Update database record with error status
     if (audioFileRecord) {
@@ -130,7 +130,7 @@ export const generateTavusLipSyncVideo = async (
           }
         });
       } catch (dbError) {
-        console.warn('Failed to update database record with error (non-critical):', dbError);
+        console.warn('⚠️ Failed to update database record with error (non-critical):', dbError);
       }
     }
     
@@ -158,12 +158,12 @@ export const getTavusVideoStatus = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Error getting video status:", errorText);
+      console.error("❌ Error getting video status:", errorText);
       throw new Error(`Failed to get video status: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("Video status response:", data);
+    console.log("📊 Video status response:", data);
     
     // Update database record if video is completed
     if (updateDatabase && data.status === 'completed' && data.video_url) {
@@ -181,16 +181,16 @@ export const getTavusVideoStatus = async (
               final_status_response: data
             }
           });
-          console.log('Updated audio file record with completion data');
+          console.log('✅ Updated audio file record with completion data');
         }
       } catch (dbError) {
-        console.warn('Failed to update database record with completion data (non-critical):', dbError);
+        console.warn('⚠️ Failed to update database record with completion data (non-critical):', dbError);
       }
     }
     
     return data;
   } catch (error) {
-    console.error("Error getting video status:", error);
+    console.error("❌ Error getting video status:", error);
     throw error;
   }
 };

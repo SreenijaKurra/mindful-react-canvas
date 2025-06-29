@@ -45,26 +45,6 @@ export const ChatInterface: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [currentVideoText, setCurrentVideoText] = useState<string>("");
 
-  // Force re-render when video popup state changes
-  useEffect(() => {
-    console.log('ChatInterface: Video popup state changed:', {
-      isTavusPlayerOpen,
-      tavusVideoUrl: !!tavusVideoUrl,
-      isGeneratingVideo,
-      videoError
-    });
-  }, [isTavusPlayerOpen, tavusVideoUrl, isGeneratingVideo, videoError]);
-
-  // Debug logging for video popup state
-  useEffect(() => {
-    console.log('Video popup state:', {
-      isTavusPlayerOpen,
-      tavusVideoUrl,
-      isGeneratingVideo,
-      videoError
-    });
-  }, [isTavusPlayerOpen, tavusVideoUrl, isGeneratingVideo, videoError]);
-
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -254,7 +234,7 @@ export const ChatInterface: React.FC = () => {
     }
 
     try {
-      console.log('Generating Tavus lip sync video for text:', text);
+      console.log('🎬 Generating Tavus lip sync video for text:', text);
       
       // Generate lip sync video using Tavus API with your persona
       const videoResponse = await generateTavusLipSyncVideo(token, text.substring(0, 500), settings.name); // Limit text length
@@ -267,16 +247,16 @@ export const ChatInterface: React.FC = () => {
       const pollVideoStatus = async (): Promise<void> => {
         try {
           const statusResponse = await getTavusVideoStatus(token, videoResponse.video_id);
-          console.log('Video status:', statusResponse);
+          console.log('📊 Video status:', statusResponse);
           
           if (statusResponse.status === 'completed' && statusResponse.video_url) {
             setTavusVideoUrl(statusResponse.video_url);
-            console.log('Setting video URL and opening player:', statusResponse.video_url);
+            console.log('✅ Setting video URL and opening player:', statusResponse.video_url);
             
             // Small delay to ensure state is set before opening
             setTimeout(() => {
               setIsTavusPlayerOpen(true);
-              console.log('Tavus player opened with URL:', statusResponse.video_url);
+              console.log('🎬 Tavus player opened with URL:', statusResponse.video_url);
             }, 100);
             
             setIsTavusPlayerOpen(true);
@@ -294,7 +274,7 @@ export const ChatInterface: React.FC = () => {
             });
             
             // Log successful completion to console for demo
-            console.log('Audio file successfully stored in Supabase with video URL:', statusResponse.video_url);
+            console.log('💾 Audio file successfully stored in Supabase with video URL:', statusResponse.video_url);
             
           } else if (statusResponse.status === 'failed') {
             // Update database with failed status

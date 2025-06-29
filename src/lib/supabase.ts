@@ -26,6 +26,8 @@ export interface AudioFile {
 export const audioFileService = {
   // Create a new audio file record
   async create(data: Partial<AudioFile>): Promise<AudioFile> {
+    console.log('Creating audio file record:', data);
+    
     const { data: audioFile, error } = await supabase
       .from('audio_files')
       .insert([{
@@ -47,11 +49,14 @@ export const audioFileService = {
       throw error;
     }
 
+    console.log('Successfully created audio file record:', audioFile);
     return audioFile;
   },
 
   // Update an existing audio file record
   async update(id: string, data: Partial<AudioFile>): Promise<AudioFile> {
+    console.log('Updating audio file record:', id, data);
+    
     const { data: audioFile, error } = await supabase
       .from('audio_files')
       .update({
@@ -67,6 +72,7 @@ export const audioFileService = {
       throw error;
     }
 
+    console.log('Successfully updated audio file record:', audioFile);
     return audioFile;
   },
 
@@ -154,5 +160,26 @@ export const audioFileService = {
     }
 
     return audioFiles || [];
+  }
+};
+
+// Test connection function
+export const testSupabaseConnection = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('audio_files')
+      .select('count(*)')
+      .limit(1);
+    
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+      return false;
+    }
+    
+    console.log('Supabase connection successful');
+    return true;
+  } catch (error) {
+    console.error('Supabase connection test error:', error);
+    return false;
   }
 };
