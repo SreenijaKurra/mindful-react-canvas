@@ -13,7 +13,7 @@ interface TavusLipSyncPlayerProps {
 
 export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
   videoUrl,
-  isOpen,
+  isOpen = true,
   onClose,
   title = "AI Meditation Guide",
   subtitle = "Danny speaking"
@@ -48,6 +48,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
 
   // Auto-play when video loads
   useEffect(() => {
+    console.log('TavusLipSyncPlayer useEffect - isOpen:', isOpen, 'videoUrl:', videoUrl);
     if (videoRef.current && isOpen && videoUrl) {
       console.log('TavusLipSyncPlayer: Loading video URL:', videoUrl);
       videoRef.current.load(); // Reload the video element
@@ -89,7 +90,12 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
     setIsExpanded(!isExpanded);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !videoUrl) {
+    console.log('TavusLipSyncPlayer: Not rendering - isOpen:', isOpen, 'videoUrl:', !!videoUrl);
+    return null;
+  }
+
+  console.log('TavusLipSyncPlayer: Rendering with videoUrl:', videoUrl);
 
   return (
     <AnimatePresence>

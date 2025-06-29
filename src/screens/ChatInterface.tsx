@@ -44,6 +44,16 @@ export const ChatInterface: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [currentVideoText, setCurrentVideoText] = useState<string>("");
 
+  // Debug logging for video popup state
+  useEffect(() => {
+    console.log('Video popup state:', {
+      isTavusPlayerOpen,
+      tavusVideoUrl,
+      isGeneratingVideo,
+      videoError
+    });
+  }, [isTavusPlayerOpen, tavusVideoUrl, isGeneratingVideo, videoError]);
+
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -221,6 +231,7 @@ export const ChatInterface: React.FC = () => {
   };
 
   const handlePlayVideo = async (text: string) => {
+    console.log('handlePlayVideo called with text:', text);
     setVideoError(null); // Clear any previous errors
     setIsGeneratingVideo(true);
     setCurrentVideoText(text); // Store the text being processed
@@ -249,6 +260,7 @@ export const ChatInterface: React.FC = () => {
           
           if (statusResponse.status === 'completed' && statusResponse.video_url) {
             setTavusVideoUrl(statusResponse.video_url);
+            console.log('Setting video URL and opening player:', statusResponse.video_url);
             setIsTavusPlayerOpen(true);
             setIsGeneratingVideo(false);
             
@@ -480,11 +492,12 @@ export const ChatInterface: React.FC = () => {
       </div>
       
       {/* Tavus Lip Sync Player */}
-      {tavusVideoUrl && (
+      {tavusVideoUrl && isTavusPlayerOpen && (
         <TavusLipSyncPlayer
           videoUrl={tavusVideoUrl}
-          isOpen={isTavusPlayerOpen}
+          isOpen={true}
           onClose={() => {
+            console.log('Closing Tavus player');
             setIsTavusPlayerOpen(false);
             setTavusVideoUrl(null);
             setCurrentVideoText("");
