@@ -7,7 +7,7 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
-import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
+import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus, getTavusLipSyncStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { audioFileService, isSupabaseAvailable } from "@/lib/supabase";
