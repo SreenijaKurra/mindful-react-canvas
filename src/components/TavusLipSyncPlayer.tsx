@@ -196,11 +196,12 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             ref={videoRef}
             src={videoUrl}
             key={videoUrl} // Force re-render when URL changes
-            autoPlay
-            muted={isMuted}
+            autoPlay={true}
+            muted={false}
             playsInline
-            controls={false}
+            controls={true}
             className="w-full h-full object-cover bg-black"
+            crossOrigin="anonymous"
             onPlay={() => {
               console.log('Video started playing');
               setIsPlaying(true);
@@ -228,6 +229,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             }}
             onError={(e) => {
               console.error('TavusLipSyncPlayer: Video error:', e);
+              console.error('Video element error details:', e.currentTarget.error);
               setIsLoading(false);
             }}
           />

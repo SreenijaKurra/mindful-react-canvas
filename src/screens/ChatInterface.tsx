@@ -434,8 +434,30 @@ export const ChatInterface: React.FC = () => {
 
   // Function to get fallback video URL when Supabase is not configured
   const getSampleTavusVideo = async (): Promise<string> => {
-    // Use a reliable, publicly accessible video URL that browsers can play
-    const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    // Use multiple fallback video URLs
+    const videoUrls = [
+      'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+      'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://file-examples.com/storage/fe68c1f7d4c2d1b8e2c9c8f/2017/10/file_example_MP4_480_1_5MG.mp4'
+    ];
+    
+    // Try each URL until we find one that works
+    for (const url of videoUrls) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          console.log('✅ Using working video URL:', url);
+          return url;
+        }
+      } catch (error) {
+        console.warn('❌ Video URL failed:', url, error);
+        continue;
+      }
+    }
+    
+    // If all URLs fail, return the first one as fallback
+    const sampleVideoUrl = videoUrls[0];
     console.log('✅ Using specific sample video URL:', sampleVideoUrl);
     return sampleVideoUrl;
   };
