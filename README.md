@@ -53,3 +53,5 @@ Spin up this template in under a minute with StackBlitz:
 - [API Reference](https://docs.tavus.io/api-reference/)
 - [Tavus Platform](https://platform.tavus.io/)
 - [Daily React Reference](https://docs.daily.co/reference/daily-react)
+
+<!-- Sync fix for Lovable -->
