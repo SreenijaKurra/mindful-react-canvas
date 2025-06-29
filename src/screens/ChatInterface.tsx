@@ -12,7 +12,6 @@ import { useVideoPopup } from "@/hooks/useVideoPopup";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
-import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
   id: string;
@@ -45,13 +44,6 @@ export const ChatInterface: React.FC = () => {
   const [tavusVideoUrl, setTavusVideoUrl] = useState<string | null>(null);
   const [isTavusPlayerOpen, setIsTavusPlayerOpen] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const { 
-    isVideoPopupOpen, 
-    isVideoPlaying, 
-    openVideoPopup, 
-    closeVideoPopup, 
-    toggleVideoPlay 
-  } = useVideoPopup();
 
   // Initialize speech recognition
   useEffect(() => {
@@ -317,7 +309,7 @@ export const ChatInterface: React.FC = () => {
 
   return (
     <DialogWrapper>
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
       
       <div className="relative z-10 flex flex-col h-full max-h-[600px] w-full max-w-4xl mx-auto">
         {/* Header */}
@@ -328,7 +320,7 @@ export const ChatInterface: React.FC = () => {
             </div>
             <div>
               <h2 className="text-white font-semibold">Mindful Moments Guide</h2>
-              <p className="text-gray-400 text-sm">Powered by Tavus Persona: {settings.persona}</p>
+              <p className="text-gray-400 text-sm">Danny - Your AI Guide (Persona: {settings.persona})</p>
             </div>
           </div>
           
@@ -494,21 +486,10 @@ export const ChatInterface: React.FC = () => {
             setIsTavusPlayerOpen(false);
             setTavusVideoUrl(null);
           }}
-          title="AI Meditation Guide"
-          subtitle="Personalized lip sync response"
+          title="Danny - Your AI Guide"
+          subtitle="Personalized video response"
         />
       )}
-      
-      {/* Fallback Video Popup */}
-      <VideoPopup
-        isOpen={isVideoPopupOpen}
-        onClose={closeVideoPopup}
-        avatarVideoSrc={gloriaVideo}
-        isPlaying={isVideoPlaying}
-        onTogglePlay={toggleVideoPlay}
-        title="AI Meditation Guide"
-        subtitle="Video response"
-      />
     </DialogWrapper>
   );
 };

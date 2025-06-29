@@ -4,7 +4,6 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import gloriaVideo from "@/assets/video/gloria.mp4";
 
 export const MeditationOptions: React.FC = () => {
   const [, setScreenState] = useAtom(screenAtom);
@@ -15,15 +14,7 @@ export const MeditationOptions: React.FC = () => {
 
   return (
     <DialogWrapper>
-      <video
-        src={gloriaVideo}
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="fixed inset-0 h-full w-full object-cover"
-      />
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
       <AnimatedTextBlockWrapper>
         <div className="flex flex-col items-center justify-center gap-8 py-8">
           <div className="text-center mb-8">
@@ -60,7 +51,7 @@ export const MeditationOptions: React.FC = () => {
               <MessageCircle className="size-16 text-primary mb-2" />
               <h3 className="text-2xl font-semibold">Start Meditation Chat</h3>
               <p className="text-sm text-gray-300 text-center">
-                Begin your mindfulness journey with AI-guided conversation
+                Chat with Danny, your AI meditation guide with personalized video responses
               </p>
               <span className="text-xs text-primary font-medium">GET STARTED</span>
             </Button>

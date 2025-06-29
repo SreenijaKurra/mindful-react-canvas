@@ -16,7 +16,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
   isOpen,
   onClose,
   title = "AI Meditation Guide",
-  subtitle = "Personalized video response"
+  subtitle = "Danny speaking"
 }) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -184,7 +184,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
           {/* Lip Sync Indicator */}
           <div className="absolute top-3 right-3 bg-cyan-400/20 backdrop-blur-sm rounded-full px-2 py-1">
             <span className="text-cyan-300 text-xs font-medium">
-              🎬 Lip Sync
+              🎬 Danny
             </span>
           </div>
         </div>
