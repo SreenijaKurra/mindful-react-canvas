@@ -44,13 +44,15 @@ export const sendWebhookData = async (data: WebhookData): Promise<void> => {
     // Log the error but don't throw it to avoid breaking the main flow
     if (error instanceof Error && error.message === 'Webhook timeout') {
       console.warn("Webhook request timed out after 5 seconds");
+      return; // Don't throw for timeout errors
     } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
       console.warn("Webhook service unavailable - this is non-critical");
+      return; // Don't throw for network errors
     } else {
       console.warn("Webhook notification failed:", error);
     }
     
-    // Re-throw the error so the caller can decide how to handle it
-    throw error;
+    // Don't re-throw errors for webhook calls as they are non-critical
+    // The main application flow should continue even if webhooks fail
   }
 };

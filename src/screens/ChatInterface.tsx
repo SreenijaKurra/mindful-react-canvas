@@ -94,7 +94,8 @@ export const ChatInterface: React.FC = () => {
         session_type: "text_chat"
       });
     } catch (error) {
-      console.error("Failed to send webhook data:", error);
+      // Webhook errors are now handled silently in the webhook module
+      // No need to log here as it's already logged as a warning
     }
 
     // Simple response logic - in a real app, this would call your AI service
