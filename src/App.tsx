@@ -11,6 +11,7 @@ import {
   Conversation,
   FinalScreen,
   Settings,
+  MeditationOptions,
 } from "./screens";
 
 function App() {
@@ -26,6 +27,8 @@ function App() {
         return <OutOfMinutes />;
       case "intro":
         return <Intro />;
+      case "meditationOptions":
+        return <MeditationOptions />;
       case "settings":
         return <Settings />;
       case "instructions":

@@ -52,6 +52,7 @@ const useCreateConversationMutation = () => {
 export const Instructions: React.FC = () => {
   const daily = useDaily();
   const { currentMic, setMicrophone, setSpeaker } = useDevices();
+  const [, setScreenState] = useAtom(screenAtom);
   const { createConversationRequest } = useCreateConversationMutation();
   const [getUserMediaError, setGetUserMediaError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,7 +175,7 @@ export const Instructions: React.FC = () => {
           }}>Inner Peace</span>
         </h1>
         <p className="max-w-[650px] text-center text-base sm:text-lg text-gray-400 mb-12">
-          Connect with your personal meditation guide for personalized sessions, mindfulness coaching, and emotional support on your wellness journey.
+          Connect face-to-face with your AI meditation guide for personalized sessions, real-time emotional support, and interactive mindfulness coaching.
         </p>
         <Button
           onClick={handleClick}
@@ -215,9 +216,16 @@ export const Instructions: React.FC = () => {
           </div>
         </div>
         <span className="absolute bottom-6 px-4 text-sm text-gray-500 sm:bottom-8 sm:px-8 text-center">
-          By beginning your meditation session, I accept the{' '}
+          By starting this video session, I accept the{' '}
           <a href="#" className="text-primary hover:underline">Terms of Use</a> and acknowledge the{' '}
           <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+          <br />
+          <button
+            onClick={() => setScreenState({ currentScreen: "meditationOptions" })}
+            className="text-primary hover:underline text-sm mt-2"
+          >
+            ← Choose a different meditation style
+          </button>
         </span>
       </AnimatedTextBlockWrapper>
     </DialogWrapper>
