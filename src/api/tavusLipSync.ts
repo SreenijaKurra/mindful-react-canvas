@@ -77,7 +77,7 @@ export const generateTavusLipSyncVideo = async (
     const payload = {
       original_video_url: "https://cdn.replica.tavus.io/20283/9de1f64e.mp4", // Default video from your example
       source_audio_url: sourceAudioUrl,
-      lipsync_name: `Mindful Moments - ${new Date().toISOString()}`
+      lipsync_name: `Neuro - ${new Date().toISOString()}`
     };
     
     console.log('📤 Sending payload to Tavus lip sync API:', payload);

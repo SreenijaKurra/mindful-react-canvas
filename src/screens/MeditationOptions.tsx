@@ -23,7 +23,7 @@ export const MeditationOptions: React.FC = () => {
               style={{ fontFamily: 'Source Code Pro, monospace' }}
             >
               <span className="text-white">Welcome to</span>{" "}
-              <span style={{ color: '#9EEAFF' }}>Mindful Moments</span>
+              <span style={{ color: '#9EEAFF' }}>Neuro</span>
             </h1>
             <p className="max-w-[650px] text-center text-base sm:text-lg text-gray-400">
               Start a conversation with your AI meditation guide for personalized support and guidance

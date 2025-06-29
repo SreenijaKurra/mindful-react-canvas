@@ -19,15 +19,7 @@ export const Intro: React.FC = () => {
   return (
     <AnimatedWrapper>
       <div className="flex size-full flex-col items-center justify-center">
-        <video
-          src={gloriaVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-primary-overlay backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
         <div className="relative z-10 flex flex-col items-center gap-2 py-4 px-4 rounded-xl border border-[rgba(255,255,255,0.2)]" 
           style={{ 
             fontFamily: 'Inter, sans-serif',
@@ -35,7 +27,7 @@ export const Intro: React.FC = () => {
           }}>
           <img src="/public/images/vector.svg" alt="Logo" className="mt-2 mb-1" style={{ width: '40px', height: 'auto' }} />
 
-          <h1 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'Source Code Pro, monospace' }}>Mindful Moments</h1>
+          <h1 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'Source Code Pro, monospace' }}>Neuro</h1>
 
           <div className="flex flex-col gap-2 items-center mt-4">
             <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-3 mb-4">

@@ -138,15 +138,7 @@ export const Instructions: React.FC = () => {
   if (isPlayingSound || isLoadingConversation) {
     return (
       <DialogWrapper>
-        <video
-          src={gloriaVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="fixed inset-0 h-full w-full object-cover"
-        />
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
         <AnimatedTextBlockWrapper>
           <div className="flex flex-col items-center justify-center gap-4">
             <l-quantum
@@ -216,15 +208,7 @@ export const Instructions: React.FC = () => {
 
   return (
     <DialogWrapper>
-      <video
-        src={gloriaVideo}
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="fixed inset-0 h-full w-full object-cover"
-      />
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" />
       <AnimatedTextBlockWrapper>
         <h1 
           className="mb-4 pt-1 text-center text-3xl sm:text-4xl lg:text-5xl font-semibold"

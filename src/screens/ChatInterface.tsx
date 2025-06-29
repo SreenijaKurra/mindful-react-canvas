@@ -500,7 +500,7 @@ export const ChatInterface: React.FC = () => {
               <span className="text-white font-semibold">AI</span>
             </div>
             <div>
-              <h2 className="text-white font-semibold">Mindful Moments Guide</h2>
+              <h2 className="text-white font-semibold">Neuro AI Assistant</h2>
               <p className="text-gray-400 text-sm">Danny - Your AI Guide (Persona: {settings.persona})</p>
             </div>
           </div>
