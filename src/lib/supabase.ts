@@ -1,8 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase configuration for neuroheart org
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kqjvlhkwzwjqxqxqxqxq.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxanZsaGt3endqcXhxeHF4cXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0OTk4NzEsImV4cCI6MjA1MTA3NTg3MX0.example-anon-key';
+// Supabase configuration
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase environment variables. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set with your actual Supabase project credentials.'
+  );
+}
+
+if (supabaseUrl.includes('your-project-id') || supabaseAnonKey.includes('your-anon-key')) {
+  throw new Error(
+    'Please replace the placeholder Supabase credentials in your .env file with your actual project URL and anon key from https://app.supabase.com/project/YOUR_PROJECT/settings/api'
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
