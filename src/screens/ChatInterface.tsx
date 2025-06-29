@@ -376,22 +376,9 @@ export const ChatInterface: React.FC = () => {
     setCurrentVideoText(text); // Store the text being processed
     
     try {
-      let sampleVideoUrl: string;
-      
-      // Try to get sample video from Supabase storage if configured
-      if (supabase) {
-        console.log('🎬 Loading sample Tavus lip sync video from Supabase storage...');
-        try {
-          sampleVideoUrl = await getSampleTavusVideo();
-          console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
-        } catch (storageError) {
-          console.warn('⚠️ Failed to load from Supabase storage, using fallback video:', storageError);
-          sampleVideoUrl = getFallbackVideoUrl();
-        }
-      } else {
-        console.log('🎬 Supabase not configured, using fallback sample video...');
-        sampleVideoUrl = getFallbackVideoUrl();
-      }
+      console.log('🎬 Loading sample video...');
+      const sampleVideoUrl = await getSampleTavusVideo();
+      console.log('✅ Sample video URL retrieved:', sampleVideoUrl);
       
       // Create database record for the sample video playback
       if (isSupabaseAvailable) {
@@ -403,7 +390,7 @@ export const ChatInterface: React.FC = () => {
             status: 'completed',
             audio_url: sampleVideoUrl,
             metadata: {
-              video_source: supabase ? 'supabase_sample' : 'fallback_sample',
+              video_source: 'public_sample',
               sample_video_url: sampleVideoUrl,
               request_timestamp: new Date().toISOString(),
               text_length: text.length,
@@ -446,16 +433,9 @@ export const ChatInterface: React.FC = () => {
   };
 
   // Function to get fallback video URL when Supabase is not configured
-  const getFallbackVideoUrl = (): string => {
-    // Use a sample video from a public CDN or local asset
-    // This is a placeholder - you can replace with an actual sample video URL
-    return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-  };
-
-  // Function to get sample video from Supabase storage
   const getSampleTavusVideo = async (): Promise<string> => {
-    // Use the specific video URL you provided from Supabase storage
-    const sampleVideoUrl = 'https://zeftfvudetoboalralss.supabase.co/storage/v1/object/public/audio-files/wb378fb5ffb3f.mp4';
+    // Use a reliable, publicly accessible video URL that browsers can play
+    const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
     console.log('✅ Using specific sample video URL:', sampleVideoUrl);
     return sampleVideoUrl;
   };
