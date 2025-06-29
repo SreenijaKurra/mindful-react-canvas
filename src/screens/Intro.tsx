@@ -42,32 +42,30 @@ export const Intro: React.FC = () => {
               <p className="text-green-300 text-sm text-center">
                 ✅ Demo Mode Active - API Key Configured
               </p>
-          </div>
+            </div>
 
-          <AudioButton 
-            onClick={handleClick}
-            className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-2 text-sm text-white transition-all duration-200 hover:text-primary mt-4 disabled:opacity-50"
-            disabled={false}
-            style={{
-              height: '44px',
-              transition: 'all 0.2s ease-in-out',
-              backgroundColor: 'rgba(0,0,0,0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 15px rgba(34, 197, 254, 0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            <Unlock className="size-4" />
-            Start Your Journey
-          </AudioButton>
+            <AudioButton 
+              onClick={handleClick}
+              className="relative z-20 flex items-center justify-center gap-2 rounded-3xl border border-[rgba(255,255,255,0.3)] px-4 py-2 text-sm text-white transition-all duration-200 hover:text-primary mt-4 disabled:opacity-50"
+              disabled={false}
+              style={{
+                height: '44px',
+                transition: 'all 0.2s ease-in-out',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(34, 197, 254, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <Unlock className="size-4" />
+              Start Your Journey
+            </AudioButton>
+          </div>
         </div>
       </div>
     </AnimatedWrapper>
   );
 };
-
-  )
-}
