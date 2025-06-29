@@ -2,8 +2,13 @@ import { atom } from "jotai";
 
 // Get initial token from localStorage
 const getInitialToken = (): string | null => {
-  const savedToken = localStorage.getItem('tavus-token');
-  return savedToken || null;
+  try {
+    const savedToken = localStorage.getItem('tavus-token');
+    return savedToken && savedToken.trim() !== '' ? savedToken.trim() : null;
+  } catch (error) {
+    console.error('Error reading token from localStorage:', error);
+    return null;
+  }
 };
 
 // Atom to store the API token
@@ -17,8 +22,14 @@ export const hasTokenAtom = atom((get) => get(apiTokenAtom) !== null);
 
 // Action atom to set token
 export const setApiTokenAtom = atom(null, (_, set, token: string) => {
-  localStorage.setItem('tavus-token', token);
-  set(apiTokenAtom, token);
+  const trimmedToken = token.trim();
+  if (trimmedToken === '') {
+    localStorage.removeItem('tavus-token');
+    set(apiTokenAtom, null);
+  } else {
+    localStorage.setItem('tavus-token', trimmedToken);
+    set(apiTokenAtom, trimmedToken);
+  }
 });
 
 // Action atom to clear token

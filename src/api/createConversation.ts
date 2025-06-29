@@ -6,11 +6,18 @@ import { sendWebhookData } from "./webhook";
 export const createConversation = async (
   token: string,
 ): Promise<IConversation> => {
+  // Validate token before making API call
+  if (!token || token.trim() === '') {
+    throw new Error("API token is required. Please enter a valid Tavus API key in settings.");
+  }
+  
   // Get settings from Jotai store
   const settings = getDefaultStore().get(settingsAtom);
   
   // Add debug logs
   console.log('Creating conversation with settings:', settings);
+  console.log('Token length:', token.length);
+  console.log('Token starts with:', token.substring(0, 10) + '...');
   console.log('Greeting value:', settings.greeting);
   console.log('Context value:', settings.context);
   
@@ -36,7 +43,7 @@ export const createConversation = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": token ?? "",
+        "x-api-key": token.trim(),
       },
       body: JSON.stringify(payload),
     });
@@ -44,7 +51,14 @@ export const createConversation = async (
     if (!response?.ok) {
       const errorText = await response.text();
       console.error("API Error Response:", errorText);
-      throw new Error(`Failed to create conversation: ${response.status} - ${errorText}`);
+      
+      if (response.status === 401) {
+        throw new Error("Invalid API token. Please check your Tavus API key in settings and ensure it's correct.");
+      } else if (response.status === 403) {
+        throw new Error("Access forbidden. Please verify your API key has the necessary permissions.");
+      } else {
+        throw new Error(`Failed to create conversation: ${response.status} - ${errorText}`);
+      }
     }
 
     const data = await response.json();

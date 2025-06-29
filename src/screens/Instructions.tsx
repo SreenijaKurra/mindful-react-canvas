@@ -32,8 +32,13 @@ const useCreateConversationMutation = () => {
     setError(null);
     try {
       if (!token) {
-        throw new Error("Token is required");
+        throw new Error("API token is required. Please enter your Tavus API key in settings.");
       }
+      
+      if (token.trim() === '') {
+        throw new Error("API token cannot be empty. Please enter a valid Tavus API key in settings.");
+      }
+      
       console.log("Creating conversation with token:", token ? "Token present" : "No token");
       const conversation = await createConversation(token);
       console.log("Conversation created successfully:", conversation);
@@ -167,6 +172,19 @@ export const Instructions: React.FC = () => {
             <p className="text-gray-300 text-center max-w-md mb-6">
               {conversationError}
             </p>
+            {conversationError.includes("Invalid API token") && (
+              <p className="text-yellow-300 text-center max-w-md mb-6 text-sm">
+                💡 Get your API key from{" "}
+                <a 
+                  href="https://platform.tavus.io/api-keys" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Tavus Platform
+                </a>
+              </p>
+            )}
             <Button
               onClick={() => {
                 setError(null);
@@ -175,6 +193,13 @@ export const Instructions: React.FC = () => {
               className="bg-primary hover:bg-primary/90"
             >
               Try Again
+            </Button>
+            <Button
+              onClick={() => setScreenState({ currentScreen: "settings" })}
+              variant="outline"
+              className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800"
+            >
+              Update API Key
             </Button>
             <button
               onClick={() => setScreenState({ currentScreen: "meditationOptions" })}
