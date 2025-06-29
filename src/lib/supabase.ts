@@ -1,23 +1,31 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase configuration
+// Supabase configuration - Frontend client (anon key)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase environment variables. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set with your actual Supabase project credentials.'
-  );
+  console.error('Missing Supabase environment variables');
+  throw new Error('Supabase configuration is missing. Please check your environment variables.');
 }
 
-if (supabaseUrl.includes('your-project-id') || supabaseAnonKey.includes('your-anon-key')) {
-  throw new Error(
-    'Please replace the placeholder Supabase credentials in your .env file with your actual project URL and anon key from https://app.supabase.com/project/YOUR_PROJECT/settings/api'
-  );
-}
-
+// Frontend client with anon key (safe for browser)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Backend service client (server-side only)
+const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+export const supabaseAdmin = supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
+
+console.log('✅ Supabase clients initialized:', {
+  url: supabaseUrl,
+  hasAnonKey: !!supabaseAnonKey,
+  hasServiceKey: !!supabaseServiceKey
+});
+
+// Validate environment variables
 
 // Database types
 export interface AudioFile {
