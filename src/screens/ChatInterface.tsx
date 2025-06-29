@@ -2,11 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import { DialogWrapper } from "@/components/DialogWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Video, Settings, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { Send, Video, Settings, Mic, MicOff, Volume2, VolumeX, Play } from "lucide-react";
 import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
+import { VideoPopup } from "@/components/VideoPopup";
+import { useVideoPopup } from "@/hooks/useVideoPopup";
+import { createConversation } from "@/api";
+import { apiTokenAtom } from "@/store/tokens";
+import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
   id: string;
@@ -33,6 +38,15 @@ export const ChatInterface: React.FC = () => {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [token] = useAtom(apiTokenAtom);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const { 
+    isVideoPopupOpen, 
+    isVideoPlaying, 
+    openVideoPopup, 
+    closeVideoPopup, 
+    toggleVideoPlay 
+  } = useVideoPopup();
 
   // Initialize speech recognition
   useEffect(() => {
@@ -225,6 +239,40 @@ export const ChatInterface: React.FC = () => {
     setIsPlayingAudio(false);
   };
 
+  const handlePlayVideo = async (text: string) => {
+    if (!token) {
+      console.error("No API token available for video generation");
+      return;
+    }
+
+    try {
+      setIsGeneratingVideo(true);
+      
+      // Create a Tavus conversation for this specific message
+      const conversation = await createConversation(token);
+      
+      // For now, open the video popup with the avatar
+      // In a full implementation, you would send the text to Tavus
+      // and get back a personalized video response
+      openVideoPopup();
+      
+      // Send analytics data
+      await sendWebhookData({
+        event_type: "video_response_requested",
+        user_name: settings.name,
+        timestamp: new Date().toISOString(),
+        message_text: text,
+        conversation_id: conversation.conversation_id,
+        session_type: "chat_video_response"
+      });
+      
+    } catch (error) {
+      console.error("Error generating video response:", error);
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  };
+
   return (
     <DialogWrapper>
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" />
@@ -287,19 +335,36 @@ export const ChatInterface: React.FC = () => {
                   
                   {/* Audio button for bot messages */}
                   {message.sender === 'bot' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => isPlayingAudio ? stopAudio() : handlePlayAudio(message.text)}
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                      title={isPlayingAudio ? "Stop Audio" : "Listen to Audio"}
-                    >
-                      {isPlayingAudio ? (
-                        <VolumeX className="size-3" />
-                      ) : (
-                        <Volume2 className="size-3" />
-                      )}
-                    </Button>
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => isPlayingAudio ? stopAudio() : handlePlayAudio(message.text)}
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={isPlayingAudio ? "Stop Audio" : "Listen to Audio"}
+                      >
+                        {isPlayingAudio ? (
+                          <VolumeX className="size-3" />
+                        ) : (
+                          <Volume2 className="size-3" />
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handlePlayVideo(message.text)}
+                        disabled={isGeneratingVideo}
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Play Video Response"
+                      >
+                        {isGeneratingVideo ? (
+                          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Play className="size-3" />
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -367,6 +432,17 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Video Popup */}
+      <VideoPopup
+        isOpen={isVideoPopupOpen}
+        onClose={closeVideoPopup}
+        avatarVideoSrc={gloriaVideo}
+        isPlaying={isVideoPlaying}
+        onTogglePlay={toggleVideoPlay}
+        title="AI Meditation Guide"
+        subtitle="Video response"
+      />
     </DialogWrapper>
   );
 };
