@@ -48,8 +48,22 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
 
   // Auto-play when video loads
   useEffect(() => {
-    if (videoRef.current && isOpen) {
-      videoRef.current.play().catch(console.error);
+    if (videoRef.current && isOpen && videoUrl) {
+      console.log('TavusLipSyncPlayer: Loading video URL:', videoUrl);
+      videoRef.current.load(); // Reload the video element
+      
+      // Wait a moment for the video to load, then play
+      const playVideo = async () => {
+        try {
+          await videoRef.current?.play();
+          console.log('TavusLipSyncPlayer: Video started playing');
+        } catch (error) {
+          console.error('TavusLipSyncPlayer: Error playing video:', error);
+        }
+      };
+      
+      // Small delay to ensure video is loaded
+      setTimeout(playVideo, 500);
     }
   }, [isOpen, videoUrl]);
 
@@ -148,6 +162,7 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             autoPlay
             muted={isMuted}
             playsInline
+            controls={false}
             className="w-full h-full object-cover"
             style={{ 
               height: isExpanded ? 'calc(100vh - 200px)' : '200px'
@@ -155,6 +170,9 @@ export const TavusLipSyncPlayer: React.FC<TavusLipSyncPlayerProps> = ({
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
+            onLoadStart={() => console.log('TavusLipSyncPlayer: Video load started')}
+            onCanPlay={() => console.log('TavusLipSyncPlayer: Video can play')}
+            onError={(e) => console.error('TavusLipSyncPlayer: Video error:', e)}
           />
           
           {/* Play/Pause Overlay */}

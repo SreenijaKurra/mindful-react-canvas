@@ -7,8 +7,6 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
-import { VideoPopup } from "@/components/VideoPopup";
-import { useVideoPopup } from "@/hooks/useVideoPopup";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
@@ -44,6 +42,7 @@ export const ChatInterface: React.FC = () => {
   const [tavusVideoUrl, setTavusVideoUrl] = useState<string | null>(null);
   const [isTavusPlayerOpen, setIsTavusPlayerOpen] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [currentVideoText, setCurrentVideoText] = useState<string>("");
 
   // Initialize speech recognition
   useEffect(() => {
@@ -224,6 +223,7 @@ export const ChatInterface: React.FC = () => {
   const handlePlayVideo = async (text: string) => {
     setVideoError(null); // Clear any previous errors
     setIsGeneratingVideo(true);
+    setCurrentVideoText(text); // Store the text being processed
     
     if (!token) {
       setVideoError("No API token available. Please configure your API key in settings.");
@@ -251,6 +251,8 @@ export const ChatInterface: React.FC = () => {
             setTavusVideoUrl(statusResponse.video_url);
             setIsTavusPlayerOpen(true);
             setIsGeneratingVideo(false);
+            
+            console.log('Opening Tavus player with video URL:', statusResponse.video_url);
             
             // Send analytics data
             await sendWebhookData({
@@ -485,9 +487,10 @@ export const ChatInterface: React.FC = () => {
           onClose={() => {
             setIsTavusPlayerOpen(false);
             setTavusVideoUrl(null);
+            setCurrentVideoText("");
           }}
           title="Danny - Your AI Guide"
-          subtitle="Personalized video response"
+          subtitle={`Speaking: "${currentVideoText.substring(0, 30)}${currentVideoText.length > 30 ? '...' : ''}"`}
         />
       )}
     </DialogWrapper>
