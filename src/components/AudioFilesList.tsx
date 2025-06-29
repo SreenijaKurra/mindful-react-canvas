@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { audioFileService, AudioFile } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { Play, Download, Eye, Clock, User, MessageSquare } from 'lucide-react';
+import { Play, Download, Eye, Clock, User, MessageSquare, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface AudioFilesListProps {
@@ -17,27 +17,28 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAudioFiles = async () => {
-      try {
-        setLoading(true);
-        let files;
-        
-        if (userName) {
-          files = await audioFileService.getByUser(userName);
-        } else {
-          files = await audioFileService.getRecent(limit);
-        }
-        
-        setAudioFiles(files);
-      } catch (err) {
-        console.error('Error fetching audio files:', err);
-        setError('Failed to load audio files');
-      } finally {
-        setLoading(false);
+  const fetchAudioFiles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      let files;
+      
+      if (userName) {
+        files = await audioFileService.getByUser(userName);
+      } else {
+        files = await audioFileService.getRecent(limit);
       }
-    };
+      
+      setAudioFiles(files);
+    } catch (err) {
+      console.error('Error fetching audio files:', err);
+      setError('Failed to load audio files');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchAudioFiles();
   }, [userName, limit]);
 
@@ -83,7 +84,17 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
   if (error) {
     return (
       <div className="p-4 bg-red-900/20 border border-red-700 rounded-lg">
-        <p className="text-red-300">{error}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-red-300">{error}</p>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={fetchAudioFiles}
+            className="h-8 w-8"
+          >
+            <RefreshCw className="size-4" />
+          </Button>
+        </div>
       </div>
     );
   }
@@ -94,6 +105,14 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
         <MessageSquare className="size-12 mx-auto mb-4 opacity-50" />
         <p>No audio files found</p>
         <p className="text-sm mt-2">Start a conversation to generate audio files!</p>
+        <Button
+          variant="outline"
+          onClick={fetchAudioFiles}
+          className="mt-4"
+        >
+          <RefreshCw className="size-4 mr-2" />
+          Refresh
+        </Button>
       </div>
     );
   }
@@ -104,9 +123,20 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
         <h3 className="text-lg font-semibold text-white">
           Audio Files {userName && `for ${userName}`}
         </h3>
-        <span className="text-sm text-gray-400">
-          {audioFiles.length} file{audioFiles.length !== 1 ? 's' : ''}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">
+            {audioFiles.length} file{audioFiles.length !== 1 ? 's' : ''}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={fetchAudioFiles}
+            className="h-8 w-8"
+            title="Refresh"
+          >
+            <RefreshCw className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -116,7 +146,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4"
+            className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-4 hover:bg-gray-800/70 transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -144,7 +174,7 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
                   
                   <div className="flex items-center gap-1">
                     <Clock className="size-3" />
-                    {new Date(file.created_at).toLocaleDateString()}
+                    {new Date(file.created_at).toLocaleDateString()} {new Date(file.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
 
                   {file.duration_seconds && (
@@ -193,8 +223,19 @@ export const AudioFilesList: React.FC<AudioFilesListProps> = ({
             </div>
 
             {file.video_id && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-500 font-mono">
                 Video ID: {file.video_id}
+              </div>
+            )}
+
+            {file.metadata && Object.keys(file.metadata).length > 0 && (
+              <div className="mt-2 text-xs text-gray-500">
+                <details className="cursor-pointer">
+                  <summary className="hover:text-gray-400">Metadata</summary>
+                  <pre className="mt-1 text-xs bg-gray-900/50 p-2 rounded overflow-x-auto">
+                    {JSON.stringify(file.metadata, null, 2)}
+                  </pre>
+                </details>
               </div>
             )}
           </motion.div>

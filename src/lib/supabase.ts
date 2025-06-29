@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration for neuroheart org
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-neuroheart-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-neuroheart-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kqjvlhkwzwjqxqxqxqxq.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxanZsaGt3endqcXhxeHF4cXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0OTk4NzEsImV4cCI6MjA1MTA3NTg3MX0.example-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

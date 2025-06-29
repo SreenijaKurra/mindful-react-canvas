@@ -7,6 +7,8 @@ interface TavusVideoResponse {
   video_url?: string;
   status: string;
   download_url?: string;
+  duration_seconds?: number;
+  file_size_bytes?: number;
 }
 
 export const generateTavusLipSyncVideo = async (
@@ -28,9 +30,7 @@ export const generateTavusLipSyncVideo = async (
   // Use the correct Tavus API v2 format for video generation
   const payload = {
     replica_id: settings.replica || "rfb51183fe", // Danny's replica ID
-    script: text
-    // Remove callback_url and background_url entirely since they're causing the error
-    // The API will use defaults when these fields are omitted
+    script: text.substring(0, 500) // Limit text length to avoid API limits
   };
   
   console.log('Sending payload to Tavus API:', payload);
@@ -46,7 +46,9 @@ export const generateTavusLipSyncVideo = async (
       metadata: {
         replica_id: settings.replica || "rfb51183fe",
         api_endpoint: "https://tavusapi.com/v2/videos",
-        request_timestamp: new Date().toISOString()
+        request_timestamp: new Date().toISOString(),
+        text_length: text.length,
+        truncated_text: text.substring(0, 500)
       }
     });
     console.log('Created audio file record:', audioFileRecord.id);

@@ -6,10 +6,13 @@ interface OpenAIResponse {
       content: string;
     };
   }>;
+  usage?: {
+    total_tokens: number;
+  };
 }
 
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
-  const API_KEY = "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";
+  const API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "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";
   
   // Create initial database record for TTS generation
   let audioFileRecord;
@@ -30,7 +33,7 @@ export const generateAIResponse = async (userMessage: string, userName?: string)
     console.warn('Failed to create TTS database record (non-critical):', dbError);
   }
   
-  const systemPrompt = `You are a compassionate AI meditation guide and wellness coach. Your role is to:
+  const systemPrompt = `You are a compassionate AI meditation guide and wellness coach named Danny. Your role is to:
 
 1. Provide personalized meditation guidance and mindfulness techniques
 2. Offer emotional support and stress relief strategies  
