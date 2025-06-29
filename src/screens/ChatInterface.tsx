@@ -11,6 +11,7 @@ import { VideoPopup } from "@/components/VideoPopup";
 import { useVideoPopup } from "@/hooks/useVideoPopup";
 import { createConversation, generateAIResponse } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
+import { LipSyncAvatar } from "@/components/LipSyncAvatar";
 import gloriaVideo from "@/assets/video/gloria.mp4";
 
 interface Message {
@@ -38,6 +39,7 @@ export const ChatInterface: React.FC = () => {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [currentSpeakingMessage, setCurrentSpeakingMessage] = useState<string | null>(null);
   const [token] = useAtom(apiTokenAtom);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -164,6 +166,7 @@ export const ChatInterface: React.FC = () => {
 
   const handlePlayAudio = async (text: string) => {
     // Stop any currently playing audio
+    setCurrentSpeakingMessage(null);
     if (currentAudio) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
@@ -171,6 +174,7 @@ export const ChatInterface: React.FC = () => {
 
     try {
       setIsPlayingAudio(true);
+      setCurrentSpeakingMessage(text);
       
       // Use Web Speech API for text-to-speech
       if ('speechSynthesis' in window) {
@@ -194,10 +198,12 @@ export const ChatInterface: React.FC = () => {
 
         utterance.onend = () => {
           setIsPlayingAudio(false);
+          setCurrentSpeakingMessage(null);
         };
 
         utterance.onerror = () => {
           setIsPlayingAudio(false);
+          setCurrentSpeakingMessage(null);
         };
 
         speechSynthesis.speak(utterance);
@@ -205,6 +211,7 @@ export const ChatInterface: React.FC = () => {
     } catch (error) {
       console.error("Error playing audio:", error);
       setIsPlayingAudio(false);
+      setCurrentSpeakingMessage(null);
     }
   };
 
@@ -217,6 +224,7 @@ export const ChatInterface: React.FC = () => {
       currentAudio.currentTime = 0;
     }
     setIsPlayingAudio(false);
+    setCurrentSpeakingMessage(null);
   };
 
   const handlePlayVideo = async (text: string) => {
@@ -271,11 +279,17 @@ export const ChatInterface: React.FC = () => {
       
       <div className="relative z-10 flex flex-col h-full max-h-[600px] w-full max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-black/20 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-black/20 backdrop-blur-sm relative">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
-              <span className="text-white font-semibold">AI</span>
-            </div>
+            {/* Replace static avatar with lip sync avatar */}
+            <LipSyncAvatar 
+              isPlaying={isPlayingAudio}
+              text={currentSpeakingMessage || ""}
+              onComplete={() => {
+                setIsPlayingAudio(false);
+                setCurrentSpeakingMessage(null);
+              }}
+            />
             <div>
               <h2 className="text-white font-semibold">Mindful Moments Guide</h2>
               <p className="text-gray-400 text-sm">Your AI meditation companion</p>
@@ -321,11 +335,17 @@ export const ChatInterface: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => isPlayingAudio ? stopAudio() : handlePlayAudio(message.text)}
+                        onClick={() => {
+                          if (isPlayingAudio && currentSpeakingMessage === message.text) {
+                            stopAudio();
+                          } else {
+                            handlePlayAudio(message.text);
+                          }
+                        }}
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title={isPlayingAudio ? "Stop Audio" : "Listen to Audio"}
+                        title={isPlayingAudio && currentSpeakingMessage === message.text ? "Stop Audio" : "Listen to Audio"}
                       >
-                        {isPlayingAudio ? (
+                        {isPlayingAudio && currentSpeakingMessage === message.text ? (
                           <VolumeX className="size-3" />
                         ) : (
                           <Volume2 className="size-3" />
@@ -366,6 +386,21 @@ export const ChatInterface: React.FC = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
+        
+        {/* Floating lip sync avatar when speaking */}
+        {isPlayingAudio && currentSpeakingMessage && (
+          <div className="absolute top-20 right-4 z-30 bg-black/80 backdrop-blur-sm rounded-2xl p-4 border border-cyan-400/50">
+            <LipSyncAvatar 
+              isPlaying={true}
+              text={currentSpeakingMessage}
+              onComplete={() => {
+                setIsPlayingAudio(false);
+                setCurrentSpeakingMessage(null);
+              }}
+            />
+            <p className="text-xs text-cyan-300 text-center mt-2">Speaking...</p>
+          </div>
+        )}
 
         {/* Input */}
         <div className="p-4 border-t border-gray-700 bg-black/20 backdrop-blur-sm">
