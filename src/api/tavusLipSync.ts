@@ -241,6 +241,3 @@ export const getTavusLipSyncStatus = async (
     throw error;
   }
 };
-
-// Legacy function name for backward compatibility
-export const getTavusVideoStatus = getTavusLipSyncStatus;

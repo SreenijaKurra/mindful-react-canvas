@@ -7,13 +7,12 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
-import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus, getTavusLipSyncStatus } from "@/api";
+import { generateAIResponse, generateTavusLipSyncVideo, getTavusLipSyncStatus, generateElevenLabsAudioBlob, generateTavusVideoFromAudio, getTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { AutoVideoPopup } from "@/components/AutoVideoPopup";
 import { audioFileService, isSupabaseAvailable, supabase } from "@/lib/supabase";
 import { generateElevenLabsAudio } from "@/api/elevenLabsTTS";
-import { generateElevenLabsAudioBlob, generateTavusVideoFromAudio, getTavusVideoStatus } from "@/api";
 
 interface Message {
   id: string;
