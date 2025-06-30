@@ -525,56 +525,76 @@ export const ChatInterface: React.FC = () => {
     setCurrentVideoText(text); // Store the text being processed
     
     try {
-      console.log('🎬 Loading Supabase video...');
-      const supabaseVideoUrl = 'https://zeftfvudetoboalralss.supabase.co/storage/v1/object/public/audio-files/wb378fb5ffb3f.mp4';
-      console.log('✅ Using Supabase video URL:', supabaseVideoUrl);
+      console.log('🎬 Starting Tavus video generation for manual play...');
       
-      // Create database record for the Supabase video playback
-      if (isSupabaseAvailable) {
-        try {
-          await audioFileService.create({
-            user_name: settings.name,
-            message_text: text,
-            audio_type: 'tavus_video',
-            status: 'completed',
-            audio_url: supabaseVideoUrl,
-            metadata: {
-              video_source: 'supabase_storage',
-              supabase_video_url: supabaseVideoUrl,
-              request_timestamp: new Date().toISOString(),
-              text_length: text.length,
-              original_text: text,
-              playback_type: 'supabase_video'
-            }
-          });
-          console.log('✅ Created Supabase video playback record');
-        } catch (dbError) {
-          console.warn('⚠️ Failed to create database record (non-critical):', dbError);
-        }
+      // Check if API keys are configured
+      const elevenLabsKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+      const tavusKey = import.meta.env.VITE_TAVUS_API_KEY;
+      
+      if (!elevenLabsKey || elevenLabsKey === 'your-elevenlabs-api-key') {
+        throw new Error('ElevenLabs API key not configured. Please check your .env file.');
       }
       
-      // Set the video URL and open the player immediately
-      setTavusVideoUrl(supabaseVideoUrl);
-      setIsTavusPlayerOpen(true);
-      setIsGeneratingVideo(false);
-      console.log('🎬 Supabase video popup should now be visible');
+      if (!tavusKey || tavusKey === 'your-tavus-api-key') {
+        throw new Error('Tavus API key not configured. Please check your .env file.');
+      }
       
-      // Send analytics data for Supabase video playback
+      // Step 1: Generate audio using ElevenLabs
+      console.log('🎵 Step 1: Generating ElevenLabs audio blob...');
+      const audioBlob = await generateElevenLabsAudioBlob(text, settings.name);
+      console.log('✅ Audio blob generated:', audioBlob.size, 'bytes');
+      
+      // Step 2: Send audio to Tavus for video generation
+      console.log('🎬 Step 2: Sending audio to Tavus for video generation...');
+      const videoResponse = await generateTavusVideoFromAudio(audioBlob, text, settings.name);
+      console.log('✅ Tavus video response:', videoResponse);
+      
+      // Step 3: Check if video is immediately available or needs polling
+      if (videoResponse.status === 'completed' && (videoResponse.video_url || videoResponse.hosted_url)) {
+        console.log('✅ Video immediately available:', videoResponse.video_url || videoResponse.hosted_url);
+        setTavusVideoUrl(videoResponse.video_url || videoResponse.hosted_url || '');
+        setIsTavusPlayerOpen(true);
+        setIsGeneratingVideo(false);
+      } else if (videoResponse.video_id) {
+        console.log('⏳ Video processing, polling for completion...');
+        // Use the improved polling function
+        pollTavusVideoStatus(
+          videoResponse.video_id,
+          (status) => {
+            console.log(`🔄 Video status update: ${status}`);
+            // You could update UI here to show current status
+          },
+          60 // 10 minutes max
+        ).then(completedVideo => {
+          console.log('✅ Video completed:', completedVideo.hosted_url || completedVideo.video_url);
+          setTavusVideoUrl(completedVideo.hosted_url || completedVideo.video_url || '');
+          setIsTavusPlayerOpen(true);
+          setIsGeneratingVideo(false);
+        }).catch(error => {
+          console.error('❌ Video polling failed:', error);
+          setVideoError(`Video generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setIsGeneratingVideo(false);
+        });
+      } else {
+        throw new Error('Invalid response from Tavus API - no video ID received');
+      }
+      
+      // Send analytics data for manual video generation
       try {
         await sendWebhookData({
-          event_type: "supabase_video_played",
+          event_type: "manual_video_generated",
           user_name: settings.name,
           timestamp: new Date().toISOString(),
           message_text: text,
-          video_url: supabaseVideoUrl,
-          session_type: "supabase_video_demo"
+          video_id: videoResponse.video_id,
+          session_type: "manual_tavus_video"
         });
       } catch (webhookError) {
         console.warn('⚠️ Failed to send webhook data (non-critical):', webhookError);
       }
       
     } catch (error) {
-      console.error("Error loading Supabase video:", error);
+      console.error("Error generating Tavus video:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to load Supabase video";
       setVideoError(errorMessage);
       setIsGeneratingVideo(false);
