@@ -14,15 +14,15 @@ interface OpenAIResponse {
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
   const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
   
-  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-openai-api-key' || API_KEY.length < 20) {
+  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-openai-api-key' || API_KEY.includes('*') || API_KEY.length < 20) {
     console.error('❌ OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env file');
-    throw new Error('OpenAI API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://platform.openai.com/api-keys');
+    throw new Error('OpenAI API key not configured or invalid. Please add a valid API key to your .env file.\n\nSteps to fix:\n1. Go to https://platform.openai.com/api-keys\n2. Create a new API key\n3. Copy the key to your .env file as VITE_OPENAI_API_KEY=sk-proj-your-actual-key\n4. Restart your development server');
   }
 
   // Validate API key format
-  if (!API_KEY.startsWith('sk-')) {
+  if (!API_KEY.startsWith('sk-') || API_KEY.includes('*')) {
     console.error('❌ Invalid OpenAI API key format. Key should start with "sk-"');
-    throw new Error('Invalid OpenAI API key format. Please ensure your key starts with "sk-" and is from https://platform.openai.com/api-keys');
+    throw new Error('Invalid OpenAI API key format. Please ensure your key:\n1. Starts with "sk-"\n2. Does not contain asterisks (*)\n3. Is a real key from https://platform.openai.com/api-keys\n4. Has been copied completely without truncation');
   }
   
   // Create initial database record for AI text generation
