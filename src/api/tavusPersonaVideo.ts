@@ -17,12 +17,12 @@ export const generateTavusPersonaVideo = async (
   const API_KEY = import.meta.env.VITE_TAVUS_API_KEY;
   const REPLICA_ID = import.meta.env.VITE_TAVUS_REPLICA_ID;
   
-  if (!API_KEY || API_KEY === 'your-tavus-api-key' || API_KEY === '57d74927dd6148f19c081364a7d1e024') {
+  if (!API_KEY || API_KEY === 'your-tavus-api-key' || API_KEY.length < 10) {
     console.error('❌ Tavus API key not configured. Please set VITE_TAVUS_API_KEY in your .env file');
     throw new Error('Tavus API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://platform.tavus.io/');
   }
   
-  if (!REPLICA_ID || REPLICA_ID === 'your-tavus-replica-id' || REPLICA_ID === 'r62baeccd777') {
+  if (!REPLICA_ID || REPLICA_ID === 'your-tavus-replica-id' || REPLICA_ID.length < 5) {
     console.error('❌ Tavus Replica ID not configured. Please set VITE_TAVUS_REPLICA_ID in your .env file');
     throw new Error('Tavus Replica ID not configured or invalid. Please add a valid replica ID to your .env file. Create a replica at: https://platform.tavus.io/');
   }

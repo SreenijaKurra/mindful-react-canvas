@@ -22,7 +22,7 @@ const getInitialSettings = (): Settings => {
     greeting: "",
     context: "",
     persona: "p5bf051443c7", // Your actual persona ID
-    replica: "r62baeccd777",
+    replica: import.meta.env.VITE_TAVUS_REPLICA_ID || "r62baeccd777",
   };
 };
 

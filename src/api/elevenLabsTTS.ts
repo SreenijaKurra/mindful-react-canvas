@@ -19,7 +19,7 @@ export const generateElevenLabsAudio = async (
 ): Promise<string> => {
   const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
   
-  if (!API_KEY || API_KEY === 'your-elevenlabs-api-key' || API_KEY.length < 10) {
+  if (!API_KEY || API_KEY === 'your-elevenlabs-api-key' || API_KEY === 'sk_your-elevenlabs-api-key' || API_KEY.length < 10) {
     console.error('❌ ElevenLabs API key not configured. Please set VITE_ELEVENLABS_API_KEY in your .env file');
     throw new Error('ElevenLabs API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://elevenlabs.io/');
   }

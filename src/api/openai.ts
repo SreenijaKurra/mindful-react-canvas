@@ -14,7 +14,7 @@ interface OpenAIResponse {
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
   const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
   
-  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-actual-openai-api-key-here' || API_KEY.length < 20) {
+  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-openai-api-key' || API_KEY.length < 20) {
     console.error('❌ OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env file');
     throw new Error('OpenAI API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://platform.openai.com/api-keys');
   }
