@@ -21,7 +21,7 @@ export const generateElevenLabsAudioBlob = async (
   
   if (!API_KEY || API_KEY === 'your-elevenlabs-api-key') {
     console.error('❌ ElevenLabs API key not configured. Please set VITE_ELEVENLABS_API_KEY in your .env file');
-    throw new Error('ElevenLabs API key not configured. Please add a valid API key to your .env file.');
+    throw new Error('ElevenLabs API key not configured');
   }
 
   // Default configuration
@@ -68,6 +68,9 @@ export const generateElevenLabsAudioBlob = async (
 
   try {
     // Call ElevenLabs API
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${defaultConfig.voice_id}`,
       {
@@ -82,13 +85,25 @@ export const generateElevenLabsAudioBlob = async (
           model_id: defaultConfig.model_id,
           voice_settings: defaultConfig.voice_settings,
         }),
+        signal: controller.signal,
       }
     );
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ElevenLabs API Error:', errorText);
-      throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+      
+      if (response.status === 401) {
+        throw new Error('Invalid ElevenLabs API key');
+      } else if (response.status === 429) {
+        throw new Error('ElevenLabs API rate limit exceeded');
+      } else if (response.status >= 500) {
+        throw new Error('ElevenLabs server error');
+      } else {
+        throw new Error(`ElevenLabs API error: ${response.status}`);
+      }
     }
 
     // Get audio blob
@@ -120,6 +135,15 @@ export const generateElevenLabsAudioBlob = async (
 
   } catch (error) {
     console.error('❌ Error generating ElevenLabs audio blob:', error);
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out - please try again');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error - check your internet connection');
+      }
+    }
     
     // Update database record with error
     if (audioFileRecord) {

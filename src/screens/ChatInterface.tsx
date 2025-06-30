@@ -109,76 +109,171 @@ export const ChatInterface: React.FC = () => {
   const generateAutoVideoResponse = async (responseText: string) => {
     console.log('🎬 Starting auto video generation workflow for:', responseText.substring(0, 50) + '...');
     setIsGeneratingAutoVideo(true);
+    setVideoError(null); // Clear any previous errors
     
     try {
-      // Step 1: Generate audio using ElevenLabs
-      console.log('🎵 Step 1: Generating ElevenLabs audio blob...');
-      const audioBlob = await generateElevenLabsAudioBlob(responseText, settings.name);
-      console.log('✅ Audio blob generated:', audioBlob.size, 'bytes');
+      // Check if API keys are configured
+      const elevenLabsKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+      const tavusKey = import.meta.env.VITE_TAVUS_API_KEY;
       
-      // Step 2: Send audio to Tavus for video generation
-      console.log('🎬 Step 2: Sending audio to Tavus for video generation...');
-      const videoResponse = await generateTavusVideoFromAudio(audioBlob, responseText, settings.name);
-      console.log('✅ Tavus video response:', videoResponse);
+      if (!elevenLabsKey || elevenLabsKey === 'your-elevenlabs-api-key') {
+        throw new Error('ElevenLabs API key not configured. Please check your .env file.');
+      }
       
-      // Step 3: Check if video is immediately available or needs polling
-      if (videoResponse.status === 'completed' && videoResponse.video_url) {
-        console.log('✅ Video immediately available:', videoResponse.video_url);
-        setAutoVideoUrl(videoResponse.video_url);
-        setIsAutoVideoOpen(true);
-      } else if (videoResponse.video_id) {
-        console.log('⏳ Video processing, polling for completion...');
-        // Poll for video completion
-        const pollForVideo = async () => {
-          let attempts = 0;
-          const maxAttempts = 30; // 5 minutes max (10 second intervals)
-          
-          const poll = async (): Promise<void> => {
-            try {
-              attempts++;
-              console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for video ${videoResponse.video_id}`);
-              
-              const statusResponse = await getTavusVideoStatus(videoResponse.video_id);
-              console.log('📊 Video status:', statusResponse);
-              
-              if (statusResponse.status === 'completed' && statusResponse.video_url) {
-                console.log('✅ Video completed:', statusResponse.video_url);
-                setAutoVideoUrl(statusResponse.video_url);
-                setIsAutoVideoOpen(true);
-                return;
-              } else if (statusResponse.status === 'failed') {
-                console.error('❌ Video generation failed');
-                throw new Error('Video generation failed');
-              } else if (attempts >= maxAttempts) {
-                console.error('❌ Video generation timed out');
-                throw new Error('Video generation timed out');
-              } else {
-                // Continue polling
-                setTimeout(poll, 10000); // Poll every 10 seconds
-              }
-            } catch (error) {
-              console.error('❌ Error polling video status:', error);
-              if (attempts >= maxAttempts) {
-                throw error;
-              } else {
-                // Retry polling
-                setTimeout(poll, 10000);
-              }
+      if (!tavusKey || tavusKey === 'your-tavus-api-key') {
+        throw new Error('Tavus API key not configured. Please check your .env file.');
+      }
+      
+      // Check network connectivity first
+      try {
+        await fetch('https://api.elevenlabs.io/v1/voices', {
+          method: 'GET',
+          headers: {
+            'xi-api-key': elevenLabsKey,
+          },
+        });
+        console.log('✅ ElevenLabs API connectivity verified');
+      } catch (connectivityError) {
+        console.error('❌ ElevenLabs API connectivity check failed:', connectivityError);
+        throw new Error('Unable to connect to ElevenLabs API. Please check your internet connection and API key.');
+      }
+      
+      try {
+        // Step 1: Generate audio using ElevenLabs with retry logic
+        console.log('🎵 Step 1: Generating ElevenLabs audio blob...');
+        let audioBlob;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            audioBlob = await generateElevenLabsAudioBlob(responseText, settings.name);
+            console.log('✅ Audio blob generated:', audioBlob.size, 'bytes');
+            break;
+          } catch (audioError) {
+            retryCount++;
+            console.warn(`⚠️ Audio generation attempt ${retryCount} failed:`, audioError);
+            
+            if (retryCount >= maxRetries) {
+              throw new Error(`Audio generation failed after ${maxRetries} attempts: ${audioError instanceof Error ? audioError.message : 'Unknown error'}`);
             }
+            
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+          }
+        }
+        
+        if (!audioBlob) {
+          throw new Error('Failed to generate audio blob');
+        }
+        
+        // Step 2: Send audio to Tavus for video generation with retry logic
+        console.log('🎬 Step 2: Sending audio to Tavus for video generation...');
+        let videoResponse;
+        retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+          try {
+            videoResponse = await generateTavusVideoFromAudio(audioBlob, responseText, settings.name);
+            console.log('✅ Tavus video response:', videoResponse);
+            break;
+          } catch (videoError) {
+            retryCount++;
+            console.warn(`⚠️ Video generation attempt ${retryCount} failed:`, videoError);
+            
+            if (retryCount >= maxRetries) {
+              throw new Error(`Video generation failed after ${maxRetries} attempts: ${videoError instanceof Error ? videoError.message : 'Unknown error'}`);
+            }
+            
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 3000 * retryCount));
+          }
+        }
+        
+        if (!videoResponse) {
+          throw new Error('Failed to get video response from Tavus');
+        }
+        
+        // Step 3: Check if video is immediately available or needs polling
+        if (videoResponse.status === 'completed' && videoResponse.video_url) {
+          console.log('✅ Video immediately available:', videoResponse.video_url);
+          setAutoVideoUrl(videoResponse.video_url);
+          setIsAutoVideoOpen(true);
+        } else if (videoResponse.video_id) {
+          console.log('⏳ Video processing, polling for completion...');
+          // Poll for video completion with improved error handling
+          const pollForVideo = async () => {
+            let attempts = 0;
+            const maxAttempts = 30; // 5 minutes max (10 second intervals)
+            
+            const poll = async (): Promise<void> => {
+              try {
+                attempts++;
+                console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for video ${videoResponse.video_id}`);
+                
+                const statusResponse = await getTavusVideoStatus(videoResponse.video_id);
+                console.log('📊 Video status:', statusResponse);
+                
+                if (statusResponse.status === 'completed' && statusResponse.video_url) {
+                  console.log('✅ Video completed:', statusResponse.video_url);
+                  setAutoVideoUrl(statusResponse.video_url);
+                  setIsAutoVideoOpen(true);
+                  return;
+                } else if (statusResponse.status === 'failed') {
+                  console.error('❌ Video generation failed');
+                  throw new Error('Video generation failed on Tavus servers');
+                } else if (attempts >= maxAttempts) {
+                  console.error('❌ Video generation timed out');
+                  throw new Error('Video generation timed out after 5 minutes');
+                } else {
+                  // Continue polling
+                  setTimeout(poll, 10000); // Poll every 10 seconds
+                }
+              } catch (error) {
+                console.error('❌ Error polling video status:', error);
+                if (attempts >= maxAttempts) {
+                  throw error;
+                } else {
+                  // Retry polling with exponential backoff
+                  const backoffDelay = Math.min(10000 * Math.pow(1.5, attempts - 1), 30000);
+                  setTimeout(poll, backoffDelay);
+                }
+              }
+            };
+            
+            await poll();
           };
           
-          await poll();
-        };
+          pollForVideo().catch(error => {
+            console.error('❌ Video polling failed:', error);
+            setVideoError(`Video generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          });
+        } else {
+          throw new Error('Invalid response from Tavus API - no video ID received');
+        }
         
-        pollForVideo().catch(error => {
-          console.error('❌ Video polling failed:', error);
-          setVideoError('Video generation failed or timed out');
-        });
+      } catch (apiError) {
+        console.error('❌ API error during video generation:', apiError);
+        throw apiError;
       }
       
     } catch (error) {
       console.error('❌ Auto video generation failed:', error);
-      setVideoError(error instanceof Error ? error.message : 'Video generation failed');
+      
+      let errorMessage = 'Video generation failed';
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+        } else if (error.message.includes('API key')) {
+          errorMessage = 'API configuration error. Please check your API keys in the .env file.';
+        } else if (error.message.includes('CORS')) {
+          errorMessage = 'Browser security restriction. Please try refreshing the page or using a different browser.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setVideoError(errorMessage);
     } finally {
       setIsGeneratingAutoVideo(false);
     }

@@ -19,7 +19,7 @@ export const generateTavusVideoFromAudio = async (
   
   if (!API_KEY || API_KEY === 'your-tavus-api-key') {
     console.error('❌ Tavus API key not configured. Please set VITE_TAVUS_API_KEY in your .env file');
-    throw new Error('Tavus API key not configured. Please add a valid API key to your .env file.');
+    throw new Error('Tavus API key not configured');
   }
 
   console.log('🎬 Creating Tavus video from audio blob');
@@ -56,6 +56,9 @@ export const generateTavusVideoFromAudio = async (
     console.log('Using persona_id:', PERSONA_ID);
     console.log('Audio blob size:', audioBlob.size, 'bytes');
     
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for video upload
+    
     const response = await fetch("https://api.tavus.io/videos", {
       method: "POST",
       headers: {
@@ -63,28 +66,31 @@ export const generateTavusVideoFromAudio = async (
         // Don't set Content-Type - let browser set it with boundary for FormData
       },
       body: formData,
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response?.ok) {
       const errorText = await response.text();
       console.error("❌ Tavus Video API Error Response:", errorText);
       
       if (response.status === 401) {
-        throw new Error("Invalid Tavus API token. Please check your API key in settings.");
+        throw new Error("Invalid Tavus API key");
       } else if (response.status === 403) {
-        throw new Error("Access forbidden. Please verify your Tavus API key has video generation permissions.");
+        throw new Error("Tavus API access forbidden");
       } else if (response.status === 400) {
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.message?.includes("concurrent") || errorData.message?.includes("maximum")) {
-            throw new Error("You have reached the maximum number of active video generations. Please wait for current videos to complete.");
+            throw new Error("Maximum concurrent video generations reached");
           }
         } catch (parseError) {
           // If we can't parse the error, fall through to generic error
         }
-        throw new Error(`Request failed: ${errorText}`);
+        throw new Error("Invalid request to Tavus API");
       } else {
-        throw new Error(`Failed to generate Tavus video: ${response.status} - ${errorText}`);
+        throw new Error(`Tavus API error: ${response.status}`);
       }
     }
 
@@ -124,6 +130,15 @@ export const generateTavusVideoFromAudio = async (
   } catch (error) {
     console.error("❌ Error in generateTavusVideoFromAudio:", error);
     
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Upload timed out - please try again');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error - check your internet connection');
+      }
+    }
+    
     // Update database record with error status
     if (audioFileRecord) {
       try {
@@ -156,17 +171,23 @@ export const getTavusVideoStatus = async (
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for status check
+    
     const response = await fetch(`https://api.tavus.io/videos/${videoId}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${API_KEY}`,
       },
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("❌ Error getting Tavus video status:", errorText);
-      throw new Error(`Failed to get video status: ${response.status} - ${errorText}`);
+      throw new Error(`Failed to get video status: ${response.status}`);
     }
 
     const data = await response.json();
@@ -209,6 +230,16 @@ export const getTavusVideoStatus = async (
     };
   } catch (error) {
     console.error("❌ Error getting Tavus video status:", error);
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Status check timed out');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error during status check');
+      }
+    }
+    
     throw error;
   }
 };
