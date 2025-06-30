@@ -7,3 +7,4 @@ export * from "./elevenLabsTTS";
 export * from "./tavusLipSync";
 export * from "./elevenLabsEnhanced";
 export * from "./tavusVideoGeneration";
+export * from "./tavusPersonaVideo";
