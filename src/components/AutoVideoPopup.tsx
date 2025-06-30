@@ -193,9 +193,13 @@ export const AutoVideoPopup: React.FC<AutoVideoPopupProps> = ({
               controls={true}
               className="w-full h-full object-cover bg-black"
               crossOrigin="anonymous"
+              preload="auto"
               onPlay={() => console.log('AutoVideoPopup: Video started playing')}
               onPause={() => console.log('AutoVideoPopup: Video paused')}
               onEnded={() => console.log('AutoVideoPopup: Video ended')}
+              onTimeUpdate={() => {
+                // Optional: track video progress
+              }}
             />
 
             {/* Status Indicator */}

@@ -7,7 +7,7 @@ import { useAtom } from "jotai";
 import { screenAtom } from "@/store/screens";
 import { settingsAtom } from "@/store/settings";
 import { sendWebhookData } from "@/api/webhook";
-import { generateAIResponse, generateTavusLipSyncVideo, getTavusLipSyncStatus, generateElevenLabsAudioBlob, generateTavusVideoFromAudio, getTavusVideoStatus } from "@/api";
+import { generateAIResponse, generateTavusLipSyncVideo, getTavusLipSyncStatus, generateElevenLabsAudioBlob, generateTavusVideoFromAudio, pollTavusVideoStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
 import { AutoVideoPopup } from "@/components/AutoVideoPopup";
@@ -201,50 +201,19 @@ export const ChatInterface: React.FC = () => {
           setIsAutoVideoOpen(true);
         } else if (videoResponse.video_id) {
           console.log('⏳ Video processing, polling for completion...');
-          // Poll for video completion with improved error handling
-          const pollForVideo = async () => {
-            let attempts = 0;
-            const maxAttempts = 30; // 5 minutes max (10 second intervals)
-            
-            const poll = async (): Promise<void> => {
-              try {
-                attempts++;
-                console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for video ${videoResponse.video_id}`);
-                
-                const statusResponse = await getTavusVideoStatus(videoResponse.video_id);
-                console.log('📊 Video status:', statusResponse);
-                
-                if (statusResponse.status === 'completed' && statusResponse.video_url) {
-                  console.log('✅ Video completed:', statusResponse.video_url);
-                  setAutoVideoUrl(statusResponse.video_url);
-                  setIsAutoVideoOpen(true);
-                  return;
-                } else if (statusResponse.status === 'failed') {
-                  console.error('❌ Video generation failed');
-                  throw new Error('Video generation failed on Tavus servers');
-                } else if (attempts >= maxAttempts) {
-                  console.error('❌ Video generation timed out');
-                  throw new Error('Video generation timed out after 5 minutes');
-                } else {
-                  // Continue polling
-                  setTimeout(poll, 10000); // Poll every 10 seconds
-                }
-              } catch (error) {
-                console.error('❌ Error polling video status:', error);
-                if (attempts >= maxAttempts) {
-                  throw error;
-                } else {
-                  // Retry polling with exponential backoff
-                  const backoffDelay = Math.min(10000 * Math.pow(1.5, attempts - 1), 30000);
-                  setTimeout(poll, backoffDelay);
-                }
-              }
-            };
-            
-            await poll();
-          };
-          
-          pollForVideo().catch(error => {
+          // Use the improved polling function
+          pollTavusVideoStatus(
+            videoResponse.video_id,
+            (status) => {
+              console.log(`🔄 Video status update: ${status}`);
+              // You could update UI here to show current status
+            },
+            60 // 10 minutes max
+          ).then(completedVideo => {
+            console.log('✅ Video completed:', completedVideo.hosted_url || completedVideo.video_url);
+            setAutoVideoUrl(completedVideo.hosted_url || completedVideo.video_url || '');
+            setIsAutoVideoOpen(true);
+          }).catch(error => {
             console.error('❌ Video polling failed:', error);
             setVideoError(`Video generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           });
