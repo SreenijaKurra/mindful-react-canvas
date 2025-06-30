@@ -1,38 +1,38 @@
 import { atom } from "jotai";
 
-// DEVELOPMENT ONLY - API key hardcoded for demo
-const DEMO_API_KEY = "57d74927dd6148f19c081364a7d1e024";
+// PRODUCTION - Using your actual Tavus API key
+const TAVUS_API_KEY = "57d74927dd6148f19c081364a7d1e024";
 
 // Get initial token from localStorage
 const getInitialToken = (): string | null => {
   try {
-    // For demo purposes, always return the hardcoded key
-    return DEMO_API_KEY;
+    // Use your actual Tavus API key
+    return TAVUS_API_KEY;
     
-    // Original localStorage logic (commented out for demo)
+    // Original localStorage logic (commented out for production)
     /*
     const savedToken = localStorage.getItem('tavus-token');
     return savedToken && savedToken.trim() !== '' ? savedToken.trim() : null;
     */
   } catch (error) {
     console.error('Error reading token from localStorage:', error);
-    return DEMO_API_KEY;
+    return TAVUS_API_KEY;
   }
 };
 
 // Atom to store the API token
-export const apiTokenAtom = atom<string | null>(DEMO_API_KEY);
+export const apiTokenAtom = atom<string | null>(TAVUS_API_KEY);
 
 // Atom to track if token is being validated
 export const isValidatingTokenAtom = atom(false);
 
 // Derived atom to check if token exists
-export const hasTokenAtom = atom((get) => true); // Always true for demo
+export const hasTokenAtom = atom((get) => true); // Always true for production
 
 // Action atom to set token
 export const setApiTokenAtom = atom(null, (_, set, token: string) => {
-  // For demo, ignore token changes and always use hardcoded key
-  console.log("Demo mode: ignoring token change, using hardcoded key");
+  // For production, ignore token changes and always use your API key
+  console.log("Production mode: ignoring token change, using your API key");
   /*
   const trimmedToken = token.trim();
   if (trimmedToken === '') {
@@ -47,8 +47,8 @@ export const setApiTokenAtom = atom(null, (_, set, token: string) => {
 
 // Action atom to clear token
 export const clearApiTokenAtom = atom(null, (_, set) => {
-  // For demo, ignore clear requests
-  console.log("Demo mode: ignoring token clear, keeping hardcoded key");
+  // For production, ignore clear requests
+  console.log("Production mode: ignoring token clear, keeping your API key");
   /*
   localStorage.removeItem('tavus-token');
   set(apiTokenAtom, null);

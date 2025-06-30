@@ -21,7 +21,7 @@ const getInitialSettings = (): Settings => {
     interruptSensitivity: "medium",
     greeting: "",
     context: "",
-    persona: "p5bf051443c7",
+    persona: "p5bf051443c7", // Your actual persona ID
     replica: "rfb51183fe",
   };
 };
