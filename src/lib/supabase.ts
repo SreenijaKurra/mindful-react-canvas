@@ -11,7 +11,8 @@ const isSupabaseConfigured = !!(
   supabaseUrl !== 'https://your-project-ref.supabase.co' && 
   supabaseAnonKey !== 'your-anon-key-here' &&
   supabaseUrl.startsWith('https://') &&
-  supabaseUrl.includes('.supabase.co')
+  supabaseUrl.includes('.supabase.co') &&
+  supabaseAnonKey.length > 100 // JWT tokens are typically much longer
 );
 
 // Frontend client with anon key (safe for browser)
@@ -29,18 +30,19 @@ if (!isSupabaseConfigured) {
   console.warn('⚠️ Supabase not configured. Database features will be disabled.');
   console.warn('Current values:', {
     url: supabaseUrl || 'undefined',
-    hasAnonKey: !!supabaseAnonKey,
+    anonKeyLength: supabaseAnonKey?.length || 0,
     urlValid: supabaseUrl?.startsWith('https://') && supabaseUrl?.includes('.supabase.co')
   });
   console.warn('To enable Supabase, please:');
   console.warn('1. Create a Supabase project at https://supabase.com');
-  console.warn('2. Copy .env.example to .env');
-  console.warn('3. Update VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY with your project credentials');
+  console.warn('2. Go to Settings > API in your Supabase dashboard');
+  console.warn('3. Copy your Project URL and anon/public key');
+  console.warn('4. Update VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file');
   console.warn('4. Restart the development server');
 } else {
   console.log('✅ Supabase clients initialized:', {
     url: supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
+    anonKeyLength: supabaseAnonKey?.length || 0,
     hasServiceKey: !!supabaseServiceKey
   });
 }

@@ -19,9 +19,15 @@ export const generateElevenLabsAudio = async (
 ): Promise<string> => {
   const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
   
-  if (!API_KEY || API_KEY === 'your-elevenlabs-api-key') {
+  if (!API_KEY || API_KEY === 'your-elevenlabs-api-key' || API_KEY.length < 10) {
     console.error('❌ ElevenLabs API key not configured. Please set VITE_ELEVENLABS_API_KEY in your .env file');
-    throw new Error('ElevenLabs API key not configured. Please add a valid API key to your .env file.');
+    throw new Error('ElevenLabs API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://elevenlabs.io/');
+  }
+
+  // Validate API key format (ElevenLabs keys start with 'sk_')
+  if (!API_KEY.startsWith('sk_')) {
+    console.error('❌ Invalid ElevenLabs API key format. Key should start with "sk_"');
+    throw new Error('Invalid ElevenLabs API key format. Please ensure your key starts with "sk_" and is from https://elevenlabs.io/');
   }
 
   // Default voice settings for natural speech
@@ -83,7 +89,16 @@ export const generateElevenLabsAudio = async (
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ElevenLabs API Error:', errorText);
-      throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+      
+      if (response.status === 401) {
+        throw new Error(`ElevenLabs API authentication failed (401). Please check your API key is valid and has sufficient credits. Get your key from: https://elevenlabs.io/`);
+      } else if (response.status === 429) {
+        throw new Error(`ElevenLabs API rate limit exceeded (429). Please wait a moment and try again, or upgrade your plan.`);
+      } else if (response.status === 403) {
+        throw new Error(`ElevenLabs API access forbidden (403). Please check your API key permissions and billing status.`);
+      } else {
+        throw new Error(`ElevenLabs API error (${response.status}): ${errorText}`);
+      }
     }
 
     // Get audio blob
@@ -107,15 +122,17 @@ export const generateElevenLabsAudio = async (
       
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
-        throw new Error(`Storage upload error: ${uploadError.message}`);
+        console.warn('⚠️ Storage upload failed, creating blob URL as fallback');
+        // Create blob URL as fallback instead of throwing error
+        audioUrl = URL.createObjectURL(audioBlob);
+      } else {
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('audio-files')
+          .getPublicUrl(fileName);
+        
+        audioUrl = urlData.publicUrl;
       }
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('audio-files')
-        .getPublicUrl(fileName);
-      
-      audioUrl = urlData.publicUrl;
     } else {
       console.warn('⚠️ Supabase not available - creating blob URL for audio');
       // Create a blob URL as fallback when Supabase is not available
