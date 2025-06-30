@@ -14,9 +14,15 @@ interface OpenAIResponse {
 export const generateAIResponse = async (userMessage: string, userName?: string): Promise<string> => {
   const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
   
-  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-actual-openai-api-key-here') {
+  if (!API_KEY || API_KEY === 'your-openai-api-key' || API_KEY === 'sk-your-actual-openai-api-key-here' || API_KEY.length < 20) {
     console.error('❌ OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env file');
     throw new Error('OpenAI API key not configured or invalid. Please add a valid API key to your .env file. Get your API key from: https://platform.openai.com/api-keys');
+  }
+
+  // Validate API key format
+  if (!API_KEY.startsWith('sk-')) {
+    console.error('❌ Invalid OpenAI API key format. Key should start with "sk-"');
+    throw new Error('Invalid OpenAI API key format. Please ensure your key starts with "sk-" and is from https://platform.openai.com/api-keys');
   }
   
   // Create initial database record for AI text generation
@@ -82,7 +88,18 @@ ${userName ? `The user's name is ${userName}.` : ''}`;
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API Error:', errorText);
+      
+      if (response.status === 401) {
+        throw new Error(`OpenAI API authentication failed (401). Please check your API key is valid and has sufficient credits. Get a new key from: https://platform.openai.com/api-keys`);
+      } else if (response.status === 429) {
+        throw new Error(`OpenAI API rate limit exceeded (429). Please wait a moment and try again, or upgrade your plan.`);
+      } else if (response.status === 403) {
+        throw new Error(`OpenAI API access forbidden (403). Please check your API key permissions and billing status.`);
+      } else {
+        throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
+      }
     }
 
     const data: OpenAIResponse = await response.json();
