@@ -10,8 +10,10 @@ import { sendWebhookData } from "@/api/webhook";
 import { generateAIResponse, generateTavusLipSyncVideo, getTavusVideoStatus, getTavusLipSyncStatus } from "@/api";
 import { apiTokenAtom } from "@/store/tokens";
 import { TavusLipSyncPlayer } from "@/components/TavusLipSyncPlayer";
+import { AutoVideoPopup } from "@/components/AutoVideoPopup";
 import { audioFileService, isSupabaseAvailable, supabase } from "@/lib/supabase";
 import { generateElevenLabsAudio } from "@/api/elevenLabsTTS";
+import { generateElevenLabsAudioBlob, generateTavusVideoFromAudio, getTavusVideoStatus } from "@/api";
 
 interface Message {
   id: string;
@@ -44,6 +46,9 @@ export const ChatInterface: React.FC = () => {
   const [isTavusPlayerOpen, setIsTavusPlayerOpen] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [currentVideoText, setCurrentVideoText] = useState<string>("");
+  const [autoVideoUrl, setAutoVideoUrl] = useState<string | null>(null);
+  const [isAutoVideoOpen, setIsAutoVideoOpen] = useState(false);
+  const [isGeneratingAutoVideo, setIsGeneratingAutoVideo] = useState(false);
 
   // Add ref to track current audio element
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -102,6 +107,84 @@ export const ChatInterface: React.FC = () => {
     return await generateAIResponse(userMessage, settings.name);
   };
 
+  const generateAutoVideoResponse = async (responseText: string) => {
+    console.log('🎬 Starting auto video generation workflow for:', responseText.substring(0, 50) + '...');
+    setIsGeneratingAutoVideo(true);
+    
+    try {
+      // Step 1: Generate audio using ElevenLabs
+      console.log('🎵 Step 1: Generating ElevenLabs audio blob...');
+      const audioBlob = await generateElevenLabsAudioBlob(responseText, settings.name);
+      console.log('✅ Audio blob generated:', audioBlob.size, 'bytes');
+      
+      // Step 2: Send audio to Tavus for video generation
+      console.log('🎬 Step 2: Sending audio to Tavus for video generation...');
+      const videoResponse = await generateTavusVideoFromAudio(audioBlob, responseText, settings.name);
+      console.log('✅ Tavus video response:', videoResponse);
+      
+      // Step 3: Check if video is immediately available or needs polling
+      if (videoResponse.status === 'completed' && videoResponse.video_url) {
+        console.log('✅ Video immediately available:', videoResponse.video_url);
+        setAutoVideoUrl(videoResponse.video_url);
+        setIsAutoVideoOpen(true);
+      } else if (videoResponse.video_id) {
+        console.log('⏳ Video processing, polling for completion...');
+        // Poll for video completion
+        const pollForVideo = async () => {
+          let attempts = 0;
+          const maxAttempts = 30; // 5 minutes max (10 second intervals)
+          
+          const poll = async (): Promise<void> => {
+            try {
+              attempts++;
+              console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for video ${videoResponse.video_id}`);
+              
+              const statusResponse = await getTavusVideoStatus(videoResponse.video_id);
+              console.log('📊 Video status:', statusResponse);
+              
+              if (statusResponse.status === 'completed' && statusResponse.video_url) {
+                console.log('✅ Video completed:', statusResponse.video_url);
+                setAutoVideoUrl(statusResponse.video_url);
+                setIsAutoVideoOpen(true);
+                return;
+              } else if (statusResponse.status === 'failed') {
+                console.error('❌ Video generation failed');
+                throw new Error('Video generation failed');
+              } else if (attempts >= maxAttempts) {
+                console.error('❌ Video generation timed out');
+                throw new Error('Video generation timed out');
+              } else {
+                // Continue polling
+                setTimeout(poll, 10000); // Poll every 10 seconds
+              }
+            } catch (error) {
+              console.error('❌ Error polling video status:', error);
+              if (attempts >= maxAttempts) {
+                throw error;
+              } else {
+                // Retry polling
+                setTimeout(poll, 10000);
+              }
+            }
+          };
+          
+          await poll();
+        };
+        
+        pollForVideo().catch(error => {
+          console.error('❌ Video polling failed:', error);
+          setVideoError('Video generation failed or timed out');
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Auto video generation failed:', error);
+      setVideoError(error instanceof Error ? error.message : 'Video generation failed');
+    } finally {
+      setIsGeneratingAutoVideo(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -128,6 +211,9 @@ export const ChatInterface: React.FC = () => {
       
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
+      
+      // Automatically generate video for bot response
+      generateAutoVideoResponse(botResponse);
     }, 1000 + Math.random() * 2000);
   };
 
@@ -545,9 +631,9 @@ export const ChatInterface: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1 pr-2">
                   <p className="text-red-200 text-sm">{videoError}</p>
-                  {videoError.includes("storage bucket") && (
+                  {(videoError.includes("storage bucket") || videoError.includes("generation failed")) && (
                     <p className="text-red-300 text-xs mt-1 opacity-80">
-                      💡 Tip: Check that the video file exists at the Supabase storage URL.
+                      💡 Tip: Video generation may take a few minutes. Please try again.
                     </p>
                   )}
                 </div>
@@ -559,6 +645,19 @@ export const ChatInterface: React.FC = () => {
                 >
                   ×
                 </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Auto Video Generation Status */}
+          {isGeneratingAutoVideo && (
+            <div className="mb-4 p-3 bg-blue-900/50 border border-blue-700 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                <div>
+                  <p className="text-blue-200 text-sm">Generating AI video response...</p>
+                  <p className="text-blue-300 text-xs">Creating speech → Generating video → Processing</p>
+                </div>
               </div>
             </div>
           )}
@@ -598,6 +697,22 @@ export const ChatInterface: React.FC = () => {
           
         </div>
       </div>
+      
+      {/* Auto Video Popup */}
+      {isAutoVideoOpen && autoVideoUrl && (
+        <AutoVideoPopup
+          videoUrl={autoVideoUrl}
+          isOpen={isAutoVideoOpen}
+          onClose={() => {
+            console.log('Closing auto video popup');
+            setIsAutoVideoOpen(false);
+            setAutoVideoUrl(null);
+          }}
+          title="AI Video Response"
+          subtitle="Generated from your conversation"
+          autoPlay={true}
+        />
+      )}
       
       {/* Tavus Lip Sync Player */}
       {isTavusPlayerOpen && tavusVideoUrl && (

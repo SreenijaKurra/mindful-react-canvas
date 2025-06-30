@@ -5,3 +5,5 @@ export * from "./webhook";
 export * from "./openai";
 export * from "./elevenLabsTTS";
 export * from "./tavusLipSync";
+export * from "./elevenLabsEnhanced";
+export * from "./tavusVideoGeneration";
