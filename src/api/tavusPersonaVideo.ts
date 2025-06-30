@@ -15,7 +15,7 @@ export const generateTavusPersonaVideo = async (
   userName?: string
 ): Promise<TavusPersonaVideoResponse> => {
   const API_KEY = import.meta.env.VITE_TAVUS_API_KEY;
-  const PERSONA_ID = import.meta.env.VITE_TAVUS_PERSONA_ID || "p5bf051443c7";
+  const REPLICA_ID = import.meta.env.VITE_TAVUS_REPLICA_ID || "p5bf051443c7";
   
   if (!API_KEY || API_KEY === 'your-tavus-api-key') {
     console.error('❌ Tavus API key not configured. Please set VITE_TAVUS_API_KEY in your .env file');
@@ -23,7 +23,7 @@ export const generateTavusPersonaVideo = async (
   }
 
   console.log('🎬 Creating Tavus persona video');
-  console.log('Using persona_id:', PERSONA_ID);
+  console.log('Using replica_id:', REPLICA_ID);
   console.log('Script text:', text.substring(0, 100) + '...');
   
   // Create initial database record
@@ -39,7 +39,7 @@ export const generateTavusPersonaVideo = async (
         request_timestamp: new Date().toISOString(),
         text_length: text.length,
         original_text: text,
-        persona_id: PERSONA_ID,
+        replica_id: REPLICA_ID,
         step: 'creating_persona_video'
       }
     });
@@ -53,7 +53,7 @@ export const generateTavusPersonaVideo = async (
     console.log('🎬 Creating persona video with Tavus API...');
     
     const payload = {
-      persona_id: PERSONA_ID,
+      replica_id: REPLICA_ID,
       script: text,
       video_name: `NeuroPersona_${Date.now()}`
     };
@@ -90,7 +90,7 @@ export const generateTavusPersonaVideo = async (
             throw new Error("Maximum concurrent video generations reached. Please wait and try again.");
           }
           if (errorData.message?.includes("persona")) {
-            throw new Error("Invalid persona ID. Please check your VITE_TAVUS_PERSONA_ID configuration.");
+            throw new Error("Invalid replica ID. Please check your VITE_TAVUS_REPLICA_ID configuration.");
           }
         } catch (parseError) {
           // If we can't parse the error, fall through to generic error
